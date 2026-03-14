@@ -1,14 +1,14 @@
-package driven_infra_adapter
+package driven_infra_port
 
 import (
 	"app/pkg/applogic/domain/model"
-	"app/pkg/applogic/drived_infra_port"
-	"app/pkg/drived_infra/aws"
+	"app/pkg/applogic/domain/repository"
+	driven_infra_aws "app/pkg/driven_infra/aws"
 	"context"
 )
 
 type bankAccountRepositoryDynamoDB struct {
-	dynamo drived_infra_aws.DynamoDBClient
+	dynamo driven_infra_aws.DynamoDBClient
 }
 
 func (b bankAccountRepositoryDynamoDB) Get(ctx context.Context, id model.BankAccountID) (model.BankAccount, error) {
@@ -27,8 +27,8 @@ func (b bankAccountRepositoryDynamoDB) Put(ctx context.Context, account model.Ba
 }
 
 func NewBankAccountRepositoryDynamoDB(
-	dynamo drived_infra_aws.DynamoDBClient,
-) drived_infra_port.BankAccountRepository {
+	dynamo driven_infra_aws.DynamoDBClient,
+) repository.BankAccountRepository {
 	return bankAccountRepositoryDynamoDB{
 		dynamo: dynamo,
 	}

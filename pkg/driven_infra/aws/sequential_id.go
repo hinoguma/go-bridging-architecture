@@ -1,4 +1,4 @@
-package drived_infra_aws
+package driven_infra_aws
 
 import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"

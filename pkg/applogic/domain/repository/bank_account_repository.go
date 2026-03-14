@@ -1,4 +1,4 @@
-package drived_infra_port
+package repository
 
 import (
 	"app/pkg/applogic/domain/model"

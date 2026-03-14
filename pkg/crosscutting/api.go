@@ -22,6 +22,10 @@ const (
 
 type InValidType string
 
+func (value InValidType) String() string {
+	return string(value)
+}
+
 const (
 	InValidTypeRequired         InValidType = "required"
 	InValidTypeFormat           InValidType = "format"

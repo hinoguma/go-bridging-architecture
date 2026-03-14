@@ -1,14 +1,14 @@
-package driven_infra_adapter
+package driven_infra_port
 
 import (
 	"app/pkg/applogic/domain/model"
-	"app/pkg/applogic/drived_infra_port"
-	"app/pkg/drived_infra/aws"
+	"app/pkg/applogic/domain/repository"
+	driven_infra_aws "app/pkg/driven_infra/aws"
 	"context"
 )
 
 type transactionRecordRepositoryDynamoDB struct {
-	dynamo drived_infra_aws.DynamoDBClient
+	dynamo driven_infra_aws.DynamoDBClient
 }
 
 func (b transactionRecordRepositoryDynamoDB) Get(ctx context.Context, id model.TransactionRecordID) (model.TransactionRecord, error) {
@@ -27,8 +27,8 @@ func (b transactionRecordRepositoryDynamoDB) Put(ctx context.Context, account mo
 }
 
 func NewTransactionRecordRepositoryDynamoDB(
-	dynamo drived_infra_aws.DynamoDBClient,
-) drived_infra_port.TransactionRecordRepository {
+	dynamo driven_infra_aws.DynamoDBClient,
+) repository.TransactionRecordRepository {
 	return transactionRecordRepositoryDynamoDB{
 		dynamo: dynamo,
 	}

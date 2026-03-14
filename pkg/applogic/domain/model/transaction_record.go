@@ -4,6 +4,10 @@ import "app/pkg/crosscutting"
 
 type TransactionRecordID string
 
+func (value TransactionRecordID) String() string {
+	return string(value)
+}
+
 func IssueTransactionRecordID() TransactionRecordID {
 	return TransactionRecordID(crosscutting.IssueRandomStrID())
 }

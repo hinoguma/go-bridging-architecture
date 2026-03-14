@@ -1,4 +1,4 @@
-package drived_infra_aws
+package driven_infra_aws
 
 import (
 	"context"
