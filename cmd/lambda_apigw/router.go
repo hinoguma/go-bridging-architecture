@@ -9,19 +9,24 @@ import (
 )
 
 type APIRouter struct {
-	driverInterfaceRegistry setup.DriverInterfaceRegistry
+	driverInterfaceRegistry           *setup.DriverInterfaceRegistry
+	driverInterfaceMiddlewareRegistry *setup.DriverInterfaceMiddlewareRegistry
 }
 
 func (router APIRouter) Do(
 	ctx context.Context, event events.APIGatewayProxyRequest,
-) ([]lambdaapigw.BeforeMiddleware, lambdaapigw.LambdaAPIGWBHandler, []lambdaapigw.AfterMiddleware) {
+) (lambdaapigw.BeforeMiddlewareCollection, lambdaapigw.LambdaAPIGWBHandler, lambdaapigw.AfterMiddlewareCollection) {
 
-	beforeMiddlewares := make([]lambdaapigw.BeforeMiddleware, 0)
-	afterMiddlewares := make([]lambdaapigw.AfterMiddleware, 0)
+	beforeMiddlewares := lambdaapigw.BeforeMiddlewareCollection{}
+	afterMiddlewares := lambdaapigw.AfterMiddlewareCollection{}
 	var handler lambdaapigw.LambdaAPIGWBHandler
 
+	beforeMiddlewares.AddItem(
+		router.driverInterfaceMiddlewareRegistry.AuthenticateBeforeMiddleware(),
+	)
+
 	if event.Path == "/bank/account/deposit" && event.HTTPMethod == "POST" {
-		handler = router.driverInterfaceRegistry.GetDepositHandler()
+		handler = router.driverInterfaceRegistry.DepositHandler()
 	} else if event.Path == "/bank/account/withdraw" && event.HTTPMethod == "POST" {
 		// handler = router.driverInterfaceRegistry.GetWithdrawHandler()
 	}
@@ -30,7 +35,7 @@ func (router APIRouter) Do(
 }
 
 func NewAPIRouter(
-	driverInterfaceRegistry setup.DriverInterfaceRegistry,
+	driverInterfaceRegistry *setup.DriverInterfaceRegistry,
 ) APIRouter {
 	return APIRouter{
 		driverInterfaceRegistry: driverInterfaceRegistry,

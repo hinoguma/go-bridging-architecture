@@ -40,16 +40,22 @@ func coldStart() error {
 	timer.SetGlobalTimeGenerator(infra.NewJstTimeGenerator())
 
 	// set up user call -> app infra
-	//err := setup.GetAppInfraRegistry().Initialize(ctx)
-	//if err != nil {
-	//	return errors.LiftWithCtx(err, ctx)
-	//}
-	//setup.GetAppLogicToAppInfraBridgeRegistry().Initialize(ctx, setup.GetAppInfraRegistry())
-	//setup.GetAppLogicServiceRegistry().Initialize(ctx, setup.GetAppLogicToAppInfraBridgeRegistry())
-	//setup.GetAppLogicUseCaseRegistry().Initialize(ctx, setup.GetAppLogicToAppInfraBridgeRegistry(), setup.GetAppLogicServiceRegistry())
+	err := setup.GetDrivenInfraRegistry().Initialize(ctx)
+	if err != nil {
+		return errors.LiftWithCtx(err, ctx)
+	}
+	setup.GetDomainRepositoryRegistry().Initialize(ctx, setup.GetDrivenInfraRegistry())
+	setup.GetDomainServiceRegistry().Initialize(
+		ctx, setup.GetDomainRepositoryRegistry(),
+	)
+	setup.GetUseCaseRegistry().Initialize(
+		ctx,
+		setup.GetDomainRepositoryRegistry(),
+		setup.GetDomainServiceRegistry(),
+	)
 	setup.GetDriverInterfaceRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
 
-	apiRouter = NewAPIRouter(*setup.GetDriverInterfaceRegistry())
+	apiRouter = NewAPIRouter(setup.GetDriverInterfaceRegistry())
 	return nil
 }
 
