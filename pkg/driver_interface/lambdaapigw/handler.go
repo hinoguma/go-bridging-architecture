@@ -10,9 +10,9 @@ type LambdaAPIGWBHandler interface {
 }
 
 func NewLambdaAPIGWHandlerRunner(
-	beforeMiddlewares []BeforeMiddleware,
+	beforeMiddlewares BeforeMiddlewareCollection,
 	handler LambdaAPIGWBHandler,
-	afterMiddlewares []AfterMiddleware,
+	afterMiddlewares AfterMiddlewareCollection,
 ) LambdaAPIGWHandlerRunner {
 	return LambdaAPIGWHandlerRunner{
 		beforeMiddlewares: beforeMiddlewares,
@@ -22,13 +22,13 @@ func NewLambdaAPIGWHandlerRunner(
 }
 
 type LambdaAPIGWHandlerRunner struct {
-	beforeMiddlewares []BeforeMiddleware
+	beforeMiddlewares BeforeMiddlewareCollection
 	handler           LambdaAPIGWBHandler
-	afterMiddlewares  []AfterMiddleware
+	afterMiddlewares  AfterMiddlewareCollection
 }
 
 func (runner LambdaAPIGWHandlerRunner) Run(ctx context.Context, request HandlerRequest) (HandlerResponse, error) {
-	for _, beforeMW := range runner.beforeMiddlewares {
+	for _, beforeMW := range runner.beforeMiddlewares.GetItems() {
 		beforeMWRes, err := beforeMW.Do(ctx, request)
 		if err != nil {
 			return NewInternalServerErrorResponse(), errors.Lift(err)
@@ -44,7 +44,7 @@ func (runner LambdaAPIGWHandlerRunner) Run(ctx context.Context, request HandlerR
 		return HandlerResponse{}, err
 	}
 
-	for _, afterMW := range runner.afterMiddlewares {
+	for _, afterMW := range runner.afterMiddlewares.GetItems() {
 		afterMWRes, err := afterMW.Do(ctx, request, resp)
 		if err != nil {
 			// if afterMW returns error, we return the original response and log the error

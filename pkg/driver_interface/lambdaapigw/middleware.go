@@ -1,6 +1,9 @@
 package lambdaapigw
 
-import "context"
+import (
+	"app/pkg/crosscutting"
+	"context"
+)
 
 type BeforeMiddlewareResult struct {
 	Ctx      context.Context
@@ -8,8 +11,16 @@ type BeforeMiddlewareResult struct {
 	Response *HandlerResponse
 }
 
+func (result *BeforeMiddlewareResult) SetResponse(response HandlerResponse) {
+	result.Response = &response
+}
+
 type BeforeMiddleware interface {
 	Do(ctx context.Context, request HandlerRequest) (BeforeMiddlewareResult, error)
+}
+
+type BeforeMiddlewareCollection struct {
+	crosscutting.Collection[BeforeMiddleware]
 }
 
 type AfterMiddlewareResult struct {
@@ -23,4 +34,8 @@ type AfterMiddleware interface {
 		request HandlerRequest,
 		response HandlerResponse,
 	) (AfterMiddlewareResult, error)
+}
+
+type AfterMiddlewareCollection struct {
+	crosscutting.Collection[AfterMiddleware]
 }

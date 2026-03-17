@@ -63,6 +63,43 @@ func NewBodyDecodingErrorResponse() HandlerResponse {
 	}
 }
 
+func NewAuthErrorResponseBody(details []ErrorDetail) ErrorResponseBody {
+	return ErrorResponseBody{
+		Message: "auth error",
+		Details: details,
+	}
+}
+
+func NewAuthErrorResponse(details []ErrorDetail) HandlerResponse {
+	body := NewAuthErrorResponseBody(details)
+	return HandlerResponse{
+		Raw: events.APIGatewayProxyResponse{
+			StatusCode: crosscutting.APIStatusForbidden.Int(),
+			Body:       body.JsonString(),
+		},
+	}
+}
+
+func NewAuthTokenExpiredErrorResponse() HandlerResponse {
+	return NewAuthErrorResponse(
+		[]ErrorDetail{
+			{
+				Message: "token is expired",
+			},
+		},
+	)
+}
+
+func NewAuthTokenInValidErrorResponse() HandlerResponse {
+	return NewAuthErrorResponse(
+		[]ErrorDetail{
+			{
+				Message: "token is invalid",
+			},
+		},
+	)
+}
+
 func NewInternalServerErrorResponseBody(details []ErrorDetail) ErrorResponseBody {
 	return ErrorResponseBody{
 		Message: "internal server error",

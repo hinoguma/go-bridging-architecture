@@ -6,6 +6,23 @@ type HandlerRequest struct {
 	Raw events.APIGatewayProxyRequest
 }
 
+func (req HandlerRequest) GetHeader(key string) (string, bool) {
+	if req.Raw.Headers == nil {
+		return "", false
+	}
+	v, ok := req.Raw.Headers[key]
+	return v, ok
+}
+
+func (req HandlerRequest) GetAuthorization() (string, bool) {
+
+	val, ok := req.GetHeader("Authorization")
+	if !ok {
+		return "", false
+	}
+	return val, true
+}
+
 func NewHandlerRequest(raw events.APIGatewayProxyRequest) HandlerRequest {
 	return HandlerRequest{Raw: raw}
 }

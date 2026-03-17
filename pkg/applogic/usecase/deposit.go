@@ -31,22 +31,16 @@ type DepositUseCase interface {
 func NewDepositUseCase(
 	depositService service.DepositService,
 	dbTransactionManager repository.DBTransactionManager,
-	bankAccountRepository repository.BankAccountRepository,
-	transactionRecordRepository repository.TransactionRecordRepository,
 ) DepositUseCase {
 	return &depositUseCase{
-		depositService:              depositService,
-		dbTransactionManager:        dbTransactionManager,
-		bankAccountRepository:       bankAccountRepository,
-		transactionRecordRepository: transactionRecordRepository,
+		depositService:       depositService,
+		dbTransactionManager: dbTransactionManager,
 	}
 }
 
 type depositUseCase struct {
-	depositService              service.DepositService
-	dbTransactionManager        repository.DBTransactionManager
-	bankAccountRepository       repository.BankAccountRepository
-	transactionRecordRepository repository.TransactionRecordRepository
+	depositService       service.DepositService
+	dbTransactionManager repository.DBTransactionManager
 }
 
 func (useCase depositUseCase) Do(ctx context.Context, input DepositUseCaseInput) (DepositUseCaseOutput, error) {
