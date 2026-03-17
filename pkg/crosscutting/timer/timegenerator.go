@@ -15,6 +15,7 @@ type TimeGenerator interface {
 	Now() time.Time
 	NowTs() UnixTimestamp
 	NowTsMills() UnixTimestampMillis
+	TimeFromInt64(i int64) time.Time
 }
 
 func NowTs() UnixTimestamp {
@@ -31,6 +32,10 @@ func NowTsMills() UnixTimestampMillis {
 
 func NowYmd_Hms_ms() Ymd_Hms_ms {
 	return NowTsMills().Ymd_Hms_ms()
+}
+
+func TimeFromInt64(i int64) time.Time {
+	return globalTimeGenerator.TimeFromInt64(i)
 }
 
 type StdTimeGenerator struct {
@@ -56,4 +61,8 @@ func (t StdTimeGenerator) NowTs() UnixTimestamp {
 
 func (t StdTimeGenerator) NowTsMills() UnixTimestampMillis {
 	return UnixTimestampMillis(time.Now().In(&t.tz).UnixMilli())
+}
+
+func (t StdTimeGenerator) TimeFromInt64(i int64) time.Time {
+	return time.Unix(i, 0).In(&t.tz)
 }

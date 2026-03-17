@@ -28,15 +28,17 @@ func NewValidateErrorResponseBody(details []ErrorDetail) ErrorResponseBody {
 	}
 }
 
-func NewValidateErrorResponse(details []ErrorDetail) events.APIGatewayProxyResponse {
+func NewValidateErrorResponse(details []ErrorDetail) HandlerResponse {
 	body := NewValidateErrorResponseBody(details)
-	return events.APIGatewayProxyResponse{
-		StatusCode: crosscutting.APIStatusBadRequest.Int(),
-		Body:       body.JsonString(),
+	return HandlerResponse{
+		Raw: events.APIGatewayProxyResponse{
+			StatusCode: crosscutting.APIStatusBadRequest.Int(),
+			Body:       body.JsonString(),
+		},
 	}
 }
 
-func NewValidateErrorResponseFromValidateDetails(details []crosscutting.ValidateDetail) events.APIGatewayProxyResponse {
+func NewValidateErrorResponseFromValidateDetails(details []crosscutting.ValidateDetail) HandlerResponse {
 	errorDetails := make([]ErrorDetail, len(details))
 	for i, detail := range details {
 		errorDetails[i] = ConvertValidateErrorToErrorDetail(detail)
@@ -51,11 +53,13 @@ func NewBodyDecodingErrorResponseBody(details []ErrorDetail) ErrorResponseBody {
 	}
 }
 
-func NewBodyDecodingErrorResponse() events.APIGatewayProxyResponse {
+func NewBodyDecodingErrorResponse() HandlerResponse {
 	body := NewBodyDecodingErrorResponseBody(nil)
-	return events.APIGatewayProxyResponse{
-		StatusCode: crosscutting.APIStatusBadRequest.Int(),
-		Body:       body.JsonString(),
+	return HandlerResponse{
+		Raw: events.APIGatewayProxyResponse{
+			StatusCode: crosscutting.APIStatusBadRequest.Int(),
+			Body:       body.JsonString(),
+		},
 	}
 }
 
@@ -66,11 +70,13 @@ func NewInternalServerErrorResponseBody(details []ErrorDetail) ErrorResponseBody
 	}
 }
 
-func NewInternalServerErrorResponse() events.APIGatewayProxyResponse {
+func NewInternalServerErrorResponse() HandlerResponse {
 	body := NewInternalServerErrorResponseBody(nil)
-	return events.APIGatewayProxyResponse{
-		StatusCode: crosscutting.APIStatusInternalServerError.Int(),
-		Body:       body.JsonString(),
+	return HandlerResponse{
+		Raw: events.APIGatewayProxyResponse{
+			StatusCode: crosscutting.APIStatusInternalServerError.Int(),
+			Body:       body.JsonString(),
+		},
 	}
 }
 

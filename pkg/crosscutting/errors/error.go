@@ -26,6 +26,8 @@ func LiftWithCtx(err error, ctx context.Context) error {
 	return AddCtx(Lift(err), ctx)
 }
 
+type ErrorType serrors.ErrorType
+
 func Is(err, target error) bool {
 	return serrors.Is(err, target)
 }
@@ -48,6 +50,10 @@ func AddCtx(err error, ctx context.Context) error {
 		return serrors.Builder(err).AddTagString("requestId", ridStr).Build()
 	}
 	return err
+}
+
+func AddType(err error, errType ErrorType) error {
+	return serrors.Builder(err).SetType(errType).Build()
 }
 
 func AddTagString(err error, key, value string) error {

@@ -4,6 +4,10 @@ import "app/pkg/crosscutting"
 
 type BankUserID string
 
+func (value BankUserID) String() string {
+	return string(value)
+}
+
 func IssueBankUserID() BankUserID {
 	return BankUserID(crosscutting.IssueRandomStrID())
 }

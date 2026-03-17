@@ -1,6 +1,9 @@
 package model
 
-import "app/pkg/crosscutting"
+import (
+	"app/pkg/crosscutting"
+	"time"
+)
 
 type TransactionRecordID string
 
@@ -13,6 +16,10 @@ func IssueTransactionRecordID() TransactionRecordID {
 }
 
 type TransactionType string
+
+func (value TransactionType) String() string {
+	return string(value)
+}
 
 const (
 	TransactionTypeDeposit    TransactionType = "deposit"
@@ -28,4 +35,19 @@ type TransactionRecord struct {
 	WithdrawAmount Money
 	AfterAmount    Money
 	DBItem
+}
+
+func NewTransactionRecordDeposit(
+	accountAfter BankAccount, amount Money, t time.Time,
+) TransactionRecord {
+	record := TransactionRecord{
+		ID:               IssueTransactionRecordID(),
+		HasBankUserID:    HasBankUserID{BankUserID: accountAfter.BankUserID},
+		HasBankAccountID: HasBankAccountID{BankAccountID: accountAfter.ID},
+		Type:             TransactionTypeDeposit,
+		DepositAmount:    amount,
+		AfterAmount:      accountAfter.Amount,
+	}
+	record.Create(t)
+	return record
 }

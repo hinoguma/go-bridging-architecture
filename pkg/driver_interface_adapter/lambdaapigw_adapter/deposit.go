@@ -9,8 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
-	"github.com/aws/aws-lambda-go/events"
 )
 
 func NewDepositHandlerLambdaAPIGateway(
@@ -23,10 +21,10 @@ type DepositHandlerLambdaAPIGateway struct {
 	uc usecase.DepositUseCase
 }
 
-func (handler DepositHandlerLambdaAPIGateway) Do(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func (handler DepositHandlerLambdaAPIGateway) Do(ctx context.Context, request lambdaapigw.HandlerRequest) (lambdaapigw.HandlerResponse, error) {
 	internalServerErr := lambdaapigw.NewInternalServerErrorResponse()
 
-	body, err := DecodeEventToBody(event)
+	body, err := DecodeEventToBody(request)
 	if err != nil {
 		return lambdaapigw.NewBodyDecodingErrorResponse(), errors.Lift(err)
 	}
@@ -43,13 +41,13 @@ func (handler DepositHandlerLambdaAPIGateway) Do(ctx context.Context, event even
 		return internalServerErr, errors.Lift(err)
 	}
 
-	resp := ConvertDepositUseCaseOutputToAPIGatewayResponse(ucOutput)
+	resp := ConvertDepositUseCaseOutputToHandlerResponse(ucOutput)
 	return resp, nil
 }
 
-func DecodeEventToBody(event events.APIGatewayProxyRequest) (DepositRequestBody, error) {
+func DecodeEventToBody(request lambdaapigw.HandlerRequest) (DepositRequestBody, error) {
 	body := DepositRequestBody{}
-	err := json.Unmarshal([]byte(event.Body), &body)
+	err := json.Unmarshal([]byte(request.Raw.Body), &body)
 	if err != nil {
 		return body, errors.Lift(err)
 	}
@@ -63,9 +61,9 @@ func ConvertBodyToUseCaseInput(body DepositRequestBody) usecase.DepositUseCaseIn
 	}
 }
 
-func ConvertDepositUseCaseOutputToAPIGatewayResponse(output usecase.DepositUseCaseOutput) events.APIGatewayProxyResponse {
+func ConvertDepositUseCaseOutputToHandlerResponse(output usecase.DepositUseCaseOutput) lambdaapigw.HandlerResponse {
 	return lambdaapigw.NewSuccessResponse(
-		fmt.Sprintf("{\"transactionId\": \"%s\"}", output.TransactionID.String()),
+		fmt.Sprintf("{\"transactionId\": \"%s\"}", output.TransactionRecord.ID.String()),
 	)
 }
 

@@ -11,17 +11,17 @@ type bankAccountRepositoryDynamoDB struct {
 	dynamo driven_infra_aws.DynamoDBClient
 }
 
-func (b bankAccountRepositoryDynamoDB) Get(ctx context.Context, id model.BankAccountID) (model.BankAccount, error) {
+func (b bankAccountRepositoryDynamoDB) Get(ctx context.Context, id model.BankAccountID, optionaltFuncs ...model.DBOperationOptionalFunc) (model.BankAccount, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (b bankAccountRepositoryDynamoDB) Create(ctx context.Context, account model.BankAccount) error {
+func (b bankAccountRepositoryDynamoDB) Create(ctx context.Context, account model.BankAccount, optionaltFuncs ...model.DBOperationOptionalFunc) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (b bankAccountRepositoryDynamoDB) Put(ctx context.Context, account model.BankAccount) error {
+func (b bankAccountRepositoryDynamoDB) Put(ctx context.Context, account model.BankAccount, optionaltFuncs ...model.DBOperationOptionalFunc) error {
 	//TODO implement me
 	panic("implement me")
 }

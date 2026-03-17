@@ -27,6 +27,10 @@ func (t basedOnPlaceTimeGenerator) NowTsMills() timer.UnixTimestampMillis {
 	return timer.UnixTimestampMillis(time.Now().In(&t.tz).UnixMilli())
 }
 
+func (t basedOnPlaceTimeGenerator) TimeFromInt64(i int64) time.Time {
+	return time.Unix(i, 0).In(&t.tz)
+}
+
 func NewTimeGenerator(tz time.Location) timer.TimeGenerator {
 	return &basedOnPlaceTimeGenerator{tz: tz}
 }

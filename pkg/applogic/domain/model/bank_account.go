@@ -7,11 +7,19 @@ import (
 
 type BankAccountID string
 
+func (value BankAccountID) String() string {
+	return string(value)
+}
+
 func IssueBankAccountID() BankAccountID {
 	return BankAccountID(crosscutting.IssueRandomStrID())
 }
 
 type BankAccountType string
+
+func (value BankAccountType) String() string {
+	return string(value)
+}
 
 const (
 	BankAccountTypeCurrent BankAccountType = "current"
