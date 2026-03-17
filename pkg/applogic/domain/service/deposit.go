@@ -48,24 +48,23 @@ func (serv depositService) Do(ctx context.Context, req model.DepositRequest) (mo
 		return result, errors.Lift(err)
 	}
 
-	bankAccount, transactionRecord := model.Deposit(
+	bankAccount, updateReq, transactionRecord := model.Deposit(
 		bancAccount, req.Amount, req.GetRequestAt(),
 	)
 
-	err = serv.transactionRecordRepository.Create(
+	transactionRecord, err = serv.transactionRecordRepository.Create(
 		ctx, transactionRecord, model.WithDBTransactionID(txId),
 	)
 	if err != nil {
 		return result, errors.Lift(err)
 	}
 
-	err = serv.bankAccountRepository.Put(ctx, bankAccount, model.WithDBTransactionID(txId))
+	err = serv.bankAccountRepository.Update(ctx, updateReq, model.WithDBTransactionID(txId))
 	if err != nil {
-		err = errors.Lift(err)
-		subErr := serv.transactionRecordRepository.Delete(ctx, transactionRecord.ID, model.WithDBTransactionID(txId))
-		return result, errors.AddSubErr(err, subErr)
+		return result, errors.Lift(err)
 	}
 
+	result.BankAccount = bankAccount
 	result.Record = transactionRecord
 	return result, nil
 }

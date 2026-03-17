@@ -20,17 +20,7 @@ func (repo transactionRecordRepositoryDynamoDB) Get(ctx context.Context, id mode
 	panic("implement me")
 }
 
-func (repo transactionRecordRepositoryDynamoDB) Create(ctx context.Context, account model.TransactionRecord, optionaltFuncs ...model.DBOperationOptionalFunc) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (repo transactionRecordRepositoryDynamoDB) Put(ctx context.Context, account model.TransactionRecord, optionaltFuncs ...model.DBOperationOptionalFunc) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (repo transactionRecordRepositoryDynamoDB) Delete(ctx context.Context, id model.TransactionRecordID, optionaltFuncs ...model.DBOperationOptionalFunc) error {
+func (repo transactionRecordRepositoryDynamoDB) Create(ctx context.Context, account model.TransactionRecord, optionaltFuncs ...model.DBOperationOptionalFunc) (model.TransactionRecord, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -47,26 +37,25 @@ type transactionRecordRepositorySQL struct {
 	client rdb.SQLClient
 }
 
+func NewTransactionRecordRepositorySQL(client rdb.SQLClient) repository.TransactionRecordRepository {
+	return transactionRecordRepositorySQL{
+		client: client,
+	}
+}
+
 func (repo transactionRecordRepositorySQL) Get(ctx context.Context, id model.TransactionRecordID, optionaltFuncs ...model.DBOperationOptionalFunc) (model.TransactionRecord, error) {
-	opts := model.NewDBOperationOptions(optionaltFuncs...)
 	var row *sql.Row
 	var err error
 
+	sqlOptions := convertOptionalFuncsToSQLOperationOptions(optionaltFuncs)
+
 	sqlItem := transactionRecordSQLItem{}
-	query, args := rdb.BuildSelectQueryWithId(rdb.TableTransactionRecords, id.String(), sqlItem.Columns())
-	if opts.HasTransactionID() {
-		txId := opts.GetTransactionID()
-		conn, ok := rdb.GlobalTxConnectionPool().Get(txId.String())
-		if !ok {
-			return model.TransactionRecord{}, model.NewTransactionNotFoundError(txId)
-		}
-		row, err = repo.client.TxQueryRowContext(ctx, conn, query, args...)
-	} else {
-		row, err = repo.client.QueryRowContext(ctx, query, args...)
-	}
+
+	row, err = repo.client.GetRowByID(ctx, rdb.TableTransactionRecords, id.String(), sqlItem.Columns(), sqlOptions)
 	if err != nil {
 		return model.TransactionRecord{}, errors.Lift(err)
 	}
+
 	err = sqlItem.SetBySQLRow(row)
 	if err != nil {
 		return model.TransactionRecord{}, errors.Lift(err)
@@ -74,25 +63,26 @@ func (repo transactionRecordRepositorySQL) Get(ctx context.Context, id model.Tra
 	return sqlItem.ToModel(), nil
 }
 
-func (repo transactionRecordRepositorySQL) Create(ctx context.Context, account model.TransactionRecord, optionaltFuncs ...model.DBOperationOptionalFunc) error {
-	//TODO implement me
-	panic("implement me")
-}
+func (repo transactionRecordRepositorySQL) Create(
+	ctx context.Context,
+	item model.TransactionRecord,
+	optionaltFuncs ...model.DBOperationOptionalFunc,
+) (model.TransactionRecord, error) {
 
-func (repo transactionRecordRepositorySQL) Put(ctx context.Context, account model.TransactionRecord, optionaltFuncs ...model.DBOperationOptionalFunc) error {
-	//TODO implement me
-	panic("implement me")
-}
+	sqlOptions := convertOptionalFuncsToSQLOperationOptions(optionaltFuncs)
 
-func (repo transactionRecordRepositorySQL) Delete(ctx context.Context, id model.TransactionRecordID, optionaltFuncs ...model.DBOperationOptionalFunc) error {
-	//TODO implement me
-	panic("implement me")
-}
+	sqlItem := transactionRecordSQLItem{}
+	sqlItem.SetByModel(item)
 
-func NewTransactionRecordRepositorySQL(client rdb.SQLClient) repository.TransactionRecordRepository {
-	return transactionRecordRepositorySQL{
-		client: client,
+	sqlRow, err := repo.client.CreateRow(ctx, rdb.TableTransactionRecords, &sqlItem, sqlOptions)
+	if err != nil {
+		return item, errors.Lift(err)
 	}
+	err = sqlItem.SetBySQLRow(sqlRow)
+	if err != nil {
+		return model.TransactionRecord{}, errors.Lift(err)
+	}
+	return sqlItem.ToModel(), nil
 }
 
 type transactionRecordSQLItem struct {
@@ -168,6 +158,23 @@ func (item transactionRecordSQLItem) ToModel() model.TransactionRecord {
 	modelItem.CreatedAt = timer.TimeFromInt64(item.createdAt)
 	modelItem.UpdatedAt = timer.TimeFromInt64(item.updatedAt)
 	return modelItem
+}
+
+func (item transactionRecordSQLItem) ToMap() map[string]any {
+	return map[string]any{
+		"id":                       item.id,
+		"bank_account_id":          item.bankAccountId,
+		"bank_user_id":             item.bankUserId,
+		"type":                     item.recordType,
+		"deposit_amount_number":    item.depositAmountNumber,
+		"deposit_amount_currency":  item.depositAmountCurrency,
+		"withdraw_amount_number":   item.withdrawAmountNumber,
+		"withdraw_amount_currency": item.withdrawAmountCurrency,
+		"after_amount_number":      item.afterAmountNumber,
+		"after_amount_currency":    item.afterAmountCurrency,
+		"created_at":               item.createdAt,
+		"updated_at":               item.updatedAt,
+	}
 }
 
 func (item transactionRecordSQLItem) Columns() []string {

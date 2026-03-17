@@ -18,34 +18,83 @@ func (client postgreSQLClient) GetDB() *sql.DB {
 	return client.db
 }
 
-func (client postgreSQLClient) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
-	rows, err := SQLQueryContext(ctx, client.db.QueryContext, query, args...)
+func (client postgreSQLClient) QueryContext(
+	ctx context.Context, query string, args []any, options SQLOperationOptions,
+) (*sql.Rows, error) {
+
+	var queryFunc ExecSQLQueryFunc = client.db.QueryContext
+	if options.HasTransactionID() {
+		transactionID := options.GetTransactionID()
+		conn, ok := GlobalTxConnectionPool().Get(transactionID)
+		if !ok {
+			return nil, NewTransactionNotFoundError(transactionID)
+		}
+		queryFunc = conn.tx.QueryContext
+	}
+
+	rows, err := SQLQueryContext(ctx, queryFunc, query, args...)
 	if err != nil {
 		return nil, errors.Lift(err)
 	}
 	return rows, nil
 }
 
-func (client postgreSQLClient) TxQueryContext(ctx context.Context, conn TransactionConnection, query string, args ...any) (*sql.Rows, error) {
-	rows, err := SQLQueryContext(ctx, conn.tx.QueryContext, query, args...)
+func (client postgreSQLClient) QueryRowContext(
+	ctx context.Context, query string, args []any, options SQLOperationOptions,
+) (*sql.Row, error) {
+	var queryFunc ExecSQLQueryRowFunc = client.db.QueryRowContext
+	if options.HasTransactionID() {
+		transactionID := options.GetTransactionID()
+		conn, ok := GlobalTxConnectionPool().Get(transactionID)
+		if !ok {
+			return nil, NewTransactionNotFoundError(transactionID)
+		}
+		queryFunc = conn.tx.QueryRowContext
+	}
+
+	rows, err := SQLQueryRowContext(ctx, queryFunc, query, args...)
 	if err != nil {
 		return nil, errors.Lift(err)
 	}
 	return rows, nil
 }
 
-func (client postgreSQLClient) QueryRowContext(ctx context.Context, query string, args ...any) (*sql.Row, error) {
-	rows, err := SQLQueryRowContext(ctx, client.db.QueryRowContext, query, args...)
+func (client postgreSQLClient) GetRowByID(
+	ctx context.Context, tableName string, id string, fields []string, options SQLOperationOptions,
+) (*sql.Row, error) {
+	query, args := BuildSelectQueryWithId(tableName, id, fields)
+	row, err := client.QueryRowContext(ctx, query, args, options)
 	if err != nil {
 		return nil, errors.Lift(err)
 	}
-	return rows, nil
+	return row, nil
 }
 
-func (client postgreSQLClient) TxQueryRowContext(ctx context.Context, conn TransactionConnection, query string, args ...any) (*sql.Row, error) {
-	rows, err := SQLQueryRowContext(ctx, conn.tx.QueryRowContext, query, args...)
+func (client postgreSQLClient) CreateRow(
+	ctx context.Context,
+	tableName string,
+	item SQLDatabaseItem,
+	options SQLOperationOptions,
+) (*sql.Row, error) {
+	query, args := BuildInsertQuery(tableName, item.ToMap())
+	row, err := client.QueryRowContext(ctx, query, args, options)
 	if err != nil {
 		return nil, errors.Lift(err)
 	}
-	return rows, nil
+	return row, nil
+}
+
+func (client postgreSQLClient) UpdateRowByStrID(
+	ctx context.Context,
+	tableName string,
+	id string,
+	updateFields UpdateFieldRequests,
+	options SQLOperationOptions,
+) (*sql.Row, error) {
+	query, args := BuildUpdateQueryWithId(tableName, id, updateFields)
+	row, err := client.QueryRowContext(ctx, query, args, options)
+	if err != nil {
+		return nil, errors.Lift(err)
+	}
+	return row, nil
 }

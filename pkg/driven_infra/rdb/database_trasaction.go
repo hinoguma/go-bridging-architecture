@@ -135,6 +135,11 @@ func GlobalTxConnectionPool() TxConnectionPoolIF {
 	return txConMngSingle
 }
 
+func NewTransactionNotFoundError(id string) error {
+	err := errors.NewTransactionNotFoundError()
+	return errors.AddTagString(err, "transaction_id", id)
+}
+
 /********************************************
 	Transaction Manager
  ********************************************/

@@ -10,14 +10,20 @@ type DepositRequest struct {
 }
 
 type DepositResult struct {
-	Record TransactionRecord
-	TxID   DBTransactionID
+	BankAccount BankAccount
+	Record      TransactionRecord
+	TxID        DBTransactionID
 }
 
-func Deposit(account BankAccount, amount Money, t time.Time) (BankAccount, TransactionRecord) {
+func Deposit(account BankAccount, amount Money, t time.Time) (BankAccount, UpdateBankAccountRequest, TransactionRecord) {
 	recordId := IssueTransactionRecordID()
-	account.LastTransactionRecordID = recordId
-	account.LastTransactionTime = t
+
+	updateReq := NewUpdateBankAccountRequest(account.ID)
+	updateReq.SetAmount(account.Amount).
+		SetLastTransactionRecordID(recordId).
+		SetLastTransactionTime(t)
+
+	account = updateReq.UpdateItem(account)
 	record := NewTransactionRecordDeposit(account, amount, t)
-	return account, record
+	return account, updateReq, record
 }

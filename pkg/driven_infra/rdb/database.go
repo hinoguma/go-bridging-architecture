@@ -8,20 +8,113 @@ import (
 	"strings"
 )
 
+type SQLDatabaseItemID interface {
+	string | int64
+}
+
 type SQLDatabaseItem interface {
 	ToMap() map[string]interface{}
+	SetBySQLRow(row *sql.Row) error
+}
+
+type SQLOperationOptions struct {
+	transactionID *string
+}
+
+func (options SQLOperationOptions) HasTransactionID() bool {
+	return options.transactionID != nil
+}
+
+func (options SQLOperationOptions) GetTransactionID() string {
+	if options.transactionID == nil {
+		return ""
+	}
+	return *options.transactionID
+}
+
+func (options *SQLOperationOptions) SetTransactionID(id string) {
+	options.transactionID = &id
+}
+
+type SQLOperationOptionalFunc func(options *SQLOperationOptions)
+
+func WithTransactionID(id string) SQLOperationOptionalFunc {
+	return func(options *SQLOperationOptions) {
+		options.transactionID = &id
+	}
+}
+
+func ApplySQLOperationOptionalFunc(optionalFuncs ...SQLOperationOptionalFunc) SQLOperationOptions {
+	options := SQLOperationOptions{}
+	for _, optionalFunc := range optionalFuncs {
+		optionalFunc(&options)
+	}
+	return options
 }
 
 type SQLClient interface {
 	GetDB() *sql.DB
-	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
-	TxQueryContext(ctx context.Context, conn TransactionConnection, query string, args ...any) (*sql.Rows, error)
-	QueryRowContext(ctx context.Context, query string, args ...any) (*sql.Row, error)
-	TxQueryRowContext(ctx context.Context, conn TransactionConnection, query string, args ...any) (*sql.Row, error)
+
+	QueryContext(
+		ctx context.Context,
+		query string,
+		args []any,
+		options SQLOperationOptions,
+	) (*sql.Rows, error)
+
+	QueryRowContext(
+		ctx context.Context,
+		query string,
+		args []any,
+		options SQLOperationOptions,
+	) (*sql.Row, error)
+
+	GetRowByID(
+		ctx context.Context,
+		tableName string,
+		id string,
+		fields []string,
+		options SQLOperationOptions,
+	) (*sql.Row, error)
+
+	CreateRow(
+		ctx context.Context,
+		tableName string,
+		item SQLDatabaseItem,
+		options SQLOperationOptions,
+	) (*sql.Row, error)
+
+	UpdateRowByStrID(
+		ctx context.Context,
+		tableName string,
+		id string,
+		updateFields UpdateFieldRequests,
+		options SQLOperationOptions,
+	) (*sql.Row, error)
 }
 
 type ExecSQLQueryFunc func(ctx context.Context, query string, args ...any) (*sql.Rows, error)
 type ExecSQLQueryRowFunc func(ctx context.Context, query string, args ...any) *sql.Row
+
+//
+//func SQLQueryContextWithOpt(ctx context.Context, queryFunc ExecSQLQueryFunc, query string, args []any, optionalFuncs... SQLOperationOptionalFunc) (*sql.Rows, error) {
+//	// log, metrics, tracing, etc.
+//
+//	options := ApplySQLOperationOptionalFunc(optionalFuncs...)
+//
+//	row, err := queryFunc(ctx, query, args...)
+//	// log, metrics, tracing, etc.
+//
+//	if err != nil {
+//		if errors.As(err, &sql.ErrNoRows) {
+//			err = errors.NewDataNotFoundErr()
+//		}
+//		return row, errors.LiftWithCtx(err, ctx)
+//	}
+//
+//	// success
+//	return row, nil
+//}
 
 func SQLQueryContext(ctx context.Context, queryFunc ExecSQLQueryFunc, query string, args ...any) (*sql.Rows, error) {
 	// log, metrics, tracing, etc.
@@ -116,6 +209,14 @@ type UpdateFieldRequest struct {
 	FieldName string
 	NewValue  any
 }
+
+func NewUpdateFieldRequest(fieldName string, newValue any) UpdateFieldRequest {
+	return UpdateFieldRequest{
+		FieldName: fieldName,
+		NewValue:  newValue,
+	}
+}
+
 type UpdateFieldRequests []UpdateFieldRequest
 
 func (requests *UpdateFieldRequests) Append(field string, value any) *UpdateFieldRequests {

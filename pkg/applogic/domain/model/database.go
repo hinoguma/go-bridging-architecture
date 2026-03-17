@@ -107,12 +107,6 @@ type DBOperationOptions struct {
 	TransactionID *DBTransactionID
 }
 
-func NewDBOperationOptions(optFns ...DBOperationOptionalFunc) DBOperationOptions {
-	options := DBOperationOptions{}
-	ApplyDBOperationOptionalFuncs(&options, optFns...)
-	return options
-}
-
 func (options DBOperationOptions) HasTransactionID() bool {
 	return options.TransactionID != nil
 }
@@ -132,8 +126,10 @@ func WithDBTransactionID(txId DBTransactionID) DBOperationOptionalFunc {
 	}
 }
 
-func ApplyDBOperationOptionalFuncs(options *DBOperationOptions, optFns ...DBOperationOptionalFunc) {
+func ApplyDBOperationOptionalFuncs(optFns ...DBOperationOptionalFunc) DBOperationOptions {
+	options := DBOperationOptions{}
 	for _, optFn := range optFns {
-		optFn(options)
+		optFn(&options)
 	}
+	return options
 }

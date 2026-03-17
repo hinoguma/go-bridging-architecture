@@ -39,3 +39,44 @@ type BankAccount struct {
 type HasBankAccountID struct {
 	BankAccountID BankAccountID
 }
+
+type UpdateBankAccountRequest struct {
+	ID                      BankAccountID
+	Amount                  *Money
+	LastTransactionRecordID *TransactionRecordID
+	LastTransactionTime     *time.Time
+}
+
+func NewUpdateBankAccountRequest(id BankAccountID) UpdateBankAccountRequest {
+	return UpdateBankAccountRequest{
+		ID: id,
+	}
+}
+
+func (model *UpdateBankAccountRequest) SetAmount(amount Money) *UpdateBankAccountRequest {
+	model.Amount = &amount
+	return model
+}
+
+func (model *UpdateBankAccountRequest) SetLastTransactionRecordID(recordId TransactionRecordID) *UpdateBankAccountRequest {
+	model.LastTransactionRecordID = &recordId
+	return model
+}
+
+func (model *UpdateBankAccountRequest) SetLastTransactionTime(t time.Time) *UpdateBankAccountRequest {
+	model.LastTransactionTime = &t
+	return model
+}
+
+func (model UpdateBankAccountRequest) UpdateItem(item BankAccount) BankAccount {
+	if model.Amount != nil {
+		item.Amount = *model.Amount
+	}
+	if model.LastTransactionRecordID != nil {
+		item.LastTransactionRecordID = *model.LastTransactionRecordID
+	}
+	if model.LastTransactionTime != nil {
+		item.LastTransactionTime = *model.LastTransactionTime
+	}
+	return item
+}

@@ -34,7 +34,7 @@ func (registry *DrivenInfraRegistry) Initialize(
 		return errors.Lift(err)
 	}
 	registry.sqlClient = rdb.NewPostgreSQLClient(db)
-	rdb.NewTransactionManager(registry.sqlClient.GetDB())
+	registry.transactionManager = rdb.NewTransactionManager(registry.sqlClient.GetDB())
 	registry.Unlock()
 	return nil
 }
