@@ -5,6 +5,7 @@ import (
 	"app/pkg/crosscutting/errors"
 	"app/pkg/crosscutting/infra"
 	"app/pkg/crosscutting/timer"
+	"app/pkg/driven_infra/rdb"
 	"app/pkg/driver_interface/lambdaapigw"
 	"app/pkg/setup"
 	"context"
@@ -12,18 +13,19 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 )
 
 func main() {
 
-	// cold start
+	// cold start phase: initialize application and infrastructure
 	err := coldStart()
 	if err != nil {
 		fmt.Printf(errors.ToJsonString(err))
 		panic(err)
 	}
 
-	// start lambda
+	// start lambda: this is like web server start.
 	lambda.Start(lambdaHandler)
 }
 
@@ -38,9 +40,15 @@ func coldStart() error {
 		infra.NewUUIDV4Generator(),
 	)
 	timer.SetGlobalTimeGenerator(infra.NewJstTimeGenerator())
+	errors.SetContextRequestIDKey(lambdaapigw.RequestIDKey)
+	context.WithValue(ctx, lambdaapigw.RequestIDKey, "cold_start_request_id")
 
 	// set up user call -> app infra
-	err := setup.GetDrivenInfraRegistry().Initialize(ctx)
+	db, err := rdb.NewPostgresDBFromEnv()
+	if err != nil {
+		return errors.LiftWithCtx(err, ctx)
+	}
+	err = setup.GetDrivenInfraRegistry().Initialize(ctx, db)
 	if err != nil {
 		return errors.LiftWithCtx(err, ctx)
 	}
@@ -60,6 +68,13 @@ func coldStart() error {
 }
 
 func lambdaHandler(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+
+	LambdaContext, ok := lambdacontext.FromContext(ctx)
+	if ok {
+		context.WithValue(ctx, lambdaapigw.RequestIDKey, LambdaContext.AwsRequestID)
+	} else {
+		context.WithValue(ctx, lambdaapigw.RequestIDKey, "unknown_request_id")
+	}
 
 	beforeMiddlewares, handler, afterMiddlewares := apiRouter.Do(ctx, event)
 

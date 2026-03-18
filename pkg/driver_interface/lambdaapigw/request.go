@@ -2,6 +2,8 @@ package lambdaapigw
 
 import "github.com/aws/aws-lambda-go/events"
 
+const RequestIDKey = "request_id"
+
 type HandlerRequest struct {
 	Raw events.APIGatewayProxyRequest
 

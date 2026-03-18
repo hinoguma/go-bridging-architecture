@@ -49,9 +49,10 @@ func IsType(err error, targetType ErrorType) bool {
 }
 
 func AddCtx(err error, ctx context.Context) error {
-	rid := ctx.Value("requestId")
+	requestIDKey := GetContextRequestIDKey()
+	rid := ctx.Value(requestIDKey)
 	if ridStr, ok := rid.(string); ok {
-		return serrors.Builder(err).AddTagString("requestId", ridStr).Build()
+		return serrors.Builder(err).AddTagString(requestIDKey, ridStr).Build()
 	}
 	return err
 }
