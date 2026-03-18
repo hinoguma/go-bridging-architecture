@@ -1,9 +1,9 @@
 package log
 
-func Info(req LogRequest) {
-	GetGlobalLogger().Info(req)
+func Info(message string, requestFuncs ...LogRequestFunc) {
+	GetGlobalLogger().Info(message, requestFuncs...)
 }
 
-func Error(req ErrorLogRequest) {
-	GetGlobalLogger().Error(req)
+func Error(message string, requestFuncs ...LogRequestFunc) {
+	GetGlobalLogger().Error(message, requestFuncs...)
 }

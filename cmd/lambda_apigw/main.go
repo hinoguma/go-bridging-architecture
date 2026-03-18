@@ -10,7 +10,6 @@ import (
 	"app/pkg/driver_interface/lambdaapigw"
 	"app/pkg/setup"
 	"context"
-	"fmt"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -22,7 +21,10 @@ func main() {
 	// cold start phase: initialize application and infrastructure
 	err := coldStart()
 	if err != nil {
-		fmt.Printf(errors.ToJsonString(err))
+		log.Error(
+			"error in cold start",
+			log.WithErr(err),
+		)
 		panic(err)
 	}
 
@@ -33,6 +35,8 @@ func main() {
 var apiRouter APIRouter
 
 func coldStart() error {
+	log.Info("cold start started")
+
 	// setup application
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, lambdaapigw.RequestIDKey, "cold_start_request_id")
@@ -65,17 +69,24 @@ func coldStart() error {
 	setup.GetDriverInterfaceRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
 
 	apiRouter = NewAPIRouter(setup.GetDriverInterfaceRegistry())
+
+	log.Info("cold start completed")
 	return nil
 }
 
 func lambdaHandler(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-
+	requestID := "unknown_request_id"
 	LambdaContext, ok := lambdacontext.FromContext(ctx)
 	if ok {
-		ctx = context.WithValue(ctx, lambdaapigw.RequestIDKey, LambdaContext.AwsRequestID)
-	} else {
-		ctx = context.WithValue(ctx, lambdaapigw.RequestIDKey, "unknown_request_id")
+		requestID = LambdaContext.AwsRequestID
 	}
+	ctx = context.WithValue(ctx, lambdaapigw.RequestIDKey, requestID)
+
+	log.Info(
+		"lambda handler started",
+		log.WithTags(map[string]any{"event": event}),
+		log.WithRequestID(requestID),
+	)
 
 	beforeMiddlewares, handler, afterMiddlewares := apiRouter.Do(ctx, event)
 
@@ -84,7 +95,11 @@ func lambdaHandler(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 	)
 	handlerResp, err := runner.Run(ctx, lambdaapigw.NewHandlerRequest(event))
 	if err != nil {
-		log.Error(log.ErrorLogRequest{Err: err})
+		log.Error(
+			"error in lambda handler",
+			log.WithErr(err),
+			log.WithRequestID(requestID),
+		)
 	}
 	return handlerResp.Raw, err
 }

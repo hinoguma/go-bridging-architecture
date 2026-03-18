@@ -3,6 +3,7 @@ package log
 import (
 	"app/pkg/crosscutting/errors"
 	"app/pkg/crosscutting/timer"
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -14,19 +15,63 @@ func GetGlobalLogger() Logger {
 }
 
 type Logger interface {
-	Info(req LogRequest)
-	Error(req ErrorLogRequest)
+	Info(message string, requestFuncs ...LogRequestFunc)
+	Error(message string, requestFuncs ...LogRequestFunc)
 }
 
 type LogRequest struct {
-	Message string
-	Tags    map[string]any
-	Time    *time.Time
+	Level     LogLevel
+	Message   string
+	Tags      map[string]any
+	Err       error
+	Time      *time.Time
+	RequestID string
 }
 
-type ErrorLogRequest struct {
-	Err  error
-	Time *time.Time
+func (req *LogRequest) JsonString() string {
+	if req.Time == nil {
+		t := timer.Now()
+		req.Time = &t
+	}
+
+	tagsStr := "{}"
+	if req.Tags != nil {
+		tagsBytes, err := json.Marshal(req.Tags)
+		if err != nil {
+			tagsStr = "{}"
+		} else {
+			tagsStr = string(tagsBytes)
+		}
+	}
+	errStr := "{}"
+	if req.Err != nil {
+		errStr = errors.ToJsonString(req.Err)
+	}
+
+	return fmt.Sprintf(
+		`{"level": "%s", "message": "%s", "error": %s, "tags": %s, "time": "%s"}`,
+		req.Level, req.Message, errStr, tagsStr, req.Time,
+	)
+}
+
+type LogRequestFunc func(req *LogRequest)
+
+func WithErr(err error) LogRequestFunc {
+	return func(req *LogRequest) {
+		req.Err = err
+	}
+}
+
+func WithTags(tags map[string]any) LogRequestFunc {
+	return func(req *LogRequest) {
+		req.Tags = tags
+	}
+}
+
+func WithRequestID(requestID string) LogRequestFunc {
+	return func(req *LogRequest) {
+		req.RequestID = requestID
+	}
 }
 
 type LogLevel string
@@ -42,35 +87,32 @@ func NewStdLogger() Logger {
 	return StdLogger{}
 }
 
-func (logger StdLogger) Info(req LogRequest) {
+func (logger StdLogger) Info(message string, requestFuncs ...LogRequestFunc) {
+	req := LogRequest{
+		Message: message,
+	}
+	for _, f := range requestFuncs {
+		f(&req)
+	}
+	req.Level = InfoLevel
 	if req.Time == nil {
 		t := timer.Now()
 		req.Time = &t
 	}
-	fmt.Println(
-		fmt.Sprintf(
-			`{"level":"%s","message":"%s","error": {},"tags":{},"Time":"%s"}`,
-			ErrorLevel, req.Message, req.Time,
-		),
-	)
+	fmt.Println(req.JsonString())
 }
 
-func (logger StdLogger) Error(req ErrorLogRequest) {
+func (logger StdLogger) Error(message string, requestFuncs ...LogRequestFunc) {
+	req := LogRequest{
+		Message: message,
+	}
+	for _, f := range requestFuncs {
+		f(&req)
+	}
+	req.Level = ErrorLevel
 	if req.Time == nil {
 		t := timer.Now()
 		req.Time = &t
 	}
-	fmt.Println(
-		fmt.Sprintf(
-			`{"level":"%s","message":"error","error": %s,"tags":{}","Time":"%s"}`,
-			ErrorLevel, errors.ToJsonString(req.Err), req.Time,
-		),
-	)
-}
-
-type StdLogFormat struct {
-	Level   LogLevel       `json:"level"`
-	Message string         `json:"message"`
-	Tags    map[string]any `json:"tags,omitempty"`
-	Time    timer.Ymd_Hms  `json:"Time"`
+	fmt.Println(req.JsonString())
 }

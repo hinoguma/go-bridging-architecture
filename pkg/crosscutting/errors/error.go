@@ -6,6 +6,7 @@ import (
 	serrors "github.com/hinoguma/go-structured-error"
 )
 
+// New() / NewWithCtx() make a new structured error with the message and stack trace.
 func New(message string) error {
 	return serrors.New(message)
 }
@@ -13,6 +14,13 @@ func New(message string) error {
 func NewWithCtx(message string, ctx context.Context) error {
 	return AddCtx(New(message), ctx)
 }
+
+/**
+ * Wrap() / WrapWithCtx() / Lift() / LiftWithCtx()
+ * These functions convert error to structured error.
+ * Structured error has stack trace and can have tags and sub errors.
+ * If the error is already a structured error, it returns the same error.
+ */
 
 func Wrap(err error, message string) error {
 	return serrors.Wrap(err, message)
@@ -52,6 +60,7 @@ func IsType(err error, targetType ErrorType) bool {
 	return serrors.IsType(err, targetType.SErrorType())
 }
 
+// AddCtx() adds RequestID from context to error as a tag if it exists in the context.
 func AddCtx(err error, ctx context.Context) error {
 	requestIDKey := GetContextRequestIDKey()
 	rid := ctx.Value(requestIDKey)
