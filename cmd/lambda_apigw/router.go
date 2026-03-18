@@ -29,6 +29,8 @@ func (router APIRouter) Do(
 		handler = router.driverInterfaceRegistry.DepositHandler()
 	} else if event.Path == "/bank/account/withdraw" && event.HTTPMethod == "POST" {
 		handler = router.driverInterfaceRegistry.WithdrawHandler()
+	} else {
+
 	}
 
 	return beforeMiddlewares, handler, afterMiddlewares
@@ -36,8 +38,10 @@ func (router APIRouter) Do(
 
 func NewAPIRouter(
 	driverInterfaceRegistry *setup.DriverInterfaceRegistry,
+	driverInterfaceMiddlewareRegistry *setup.DriverInterfaceMiddlewareRegistry,
 ) APIRouter {
 	return APIRouter{
-		driverInterfaceRegistry: driverInterfaceRegistry,
+		driverInterfaceRegistry:           driverInterfaceRegistry,
+		driverInterfaceMiddlewareRegistry: driverInterfaceMiddlewareRegistry,
 	}
 }

@@ -67,7 +67,7 @@ func (serv depositService) Do(ctx context.Context, req model.DepositServiceReque
 		}
 	}
 
-	bancAccount, err := serv.bankAccountRepository.Get(
+	bankAccount, err := serv.bankAccountRepository.Get(
 		ctx, req.BankAccountID,
 		model.WithDBTransactionID(txId),
 		model.WithSelectLock(),
@@ -77,7 +77,7 @@ func (serv depositService) Do(ctx context.Context, req model.DepositServiceReque
 	}
 
 	depositRes := model.Deposit(
-		transactionRecordID, bancAccount, req.Amount, req.GetRequestAt(),
+		transactionRecordID, bankAccount, req.Amount, req.GetRequestAt(),
 	)
 
 	transactionRecord := depositRes.TransactionRecord

@@ -38,6 +38,22 @@ func NewErrorResponse(status int, message string, details []ErrorDetail) Handler
 	}
 }
 
+func NewNotFoundErrorResponseBody() ErrorResponseBody {
+	return ErrorResponseBody{
+		Message: "not found",
+	}
+}
+
+func NewNotFoundErrorResponse() HandlerResponse {
+	body := NewNotFoundErrorResponseBody()
+	return HandlerResponse{
+		Raw: events.APIGatewayProxyResponse{
+			StatusCode: crosscutting.APIStatusNotFound.Int(),
+			Body:       body.JsonString(),
+		},
+	}
+}
+
 func NewValidateErrorResponseBody(details []ErrorDetail) ErrorResponseBody {
 	return ErrorResponseBody{
 		Message: "validation error",

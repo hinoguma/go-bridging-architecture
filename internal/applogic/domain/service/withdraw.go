@@ -66,7 +66,7 @@ func (serv withdrawService) Do(ctx context.Context, req model.WithdrawServiceReq
 		}
 	}
 
-	bancAccount, err := serv.bankAccountRepository.Get(
+	bankAccount, err := serv.bankAccountRepository.Get(
 		ctx, req.BankAccountID,
 		model.WithDBTransactionID(txId),
 		model.WithSelectLock(),
@@ -76,7 +76,7 @@ func (serv withdrawService) Do(ctx context.Context, req model.WithdrawServiceReq
 	}
 
 	withdrawRes := model.Withdraw(
-		transactionRecordID, bancAccount, req.Amount, req.GetRequestAt(),
+		transactionRecordID, bankAccount, req.Amount, req.GetRequestAt(),
 	)
 	if withdrawRes.NotEnoughBalance {
 		result.NotEnoughBalance = true

@@ -66,9 +66,13 @@ func coldStart() error {
 		setup.GetDomainRepositoryRegistry(),
 		setup.GetDomainServiceRegistry(),
 	)
+	setup.GetDriverInterfaceMiddlewareRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
 	setup.GetDriverInterfaceRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
 
-	apiRouter = NewAPIRouter(setup.GetDriverInterfaceRegistry())
+	apiRouter = NewAPIRouter(
+		setup.GetDriverInterfaceRegistry(),
+		setup.GetDriverInterfaceMiddlewareRegistry(),
+	)
 
 	log.Info("cold start completed")
 	return nil
@@ -89,6 +93,10 @@ func lambdaHandler(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 	)
 
 	beforeMiddlewares, handler, afterMiddlewares := apiRouter.Do(ctx, event)
+	if handler == nil {
+		handlerResp := lambdaapigw.NewNotFoundErrorResponse()
+		return handlerResp.Raw, nil
+	}
 
 	runner := lambdaapigw.NewLambdaAPIGWHandlerRunner(
 		beforeMiddlewares, handler, afterMiddlewares,
