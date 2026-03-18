@@ -7,7 +7,7 @@ import (
 	"app/internal/crosscutting/log"
 	"app/internal/crosscutting/timer"
 	"app/internal/driven_infra/postgres"
-	"app/internal/driver_interface/lambdaapigw"
+	"app/internal/driver_entrance/lambdaapigw"
 	"app/internal/setup"
 	"context"
 

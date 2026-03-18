@@ -1,8 +1,8 @@
 package setup
 
 import (
-	"app/internal/driver_interface/lambdaapigw"
-	"app/internal/driver_interface_adapter/lambdaapigw_adapter"
+	"app/internal/driver_entrance/lambdaapigw"
+	"app/internal/driver_entrance_applogic_bridge/lambdaapigw_bridge"
 	"context"
 	"sync"
 )
@@ -21,7 +21,7 @@ func (registry *DriverInterfaceRegistry) Initialize(
 	registry.Lock()
 	registry.useCaseRegistry = useCaseRegistry
 
-	handler := lambdaapigw_adapter.NewDepositHandlerLambdaAPIGateway(
+	handler := lambdaapigw_bridge.NewDepositHandlerLambdaAPIGateway(
 		registry.useCaseRegistry.DepositUseCase(),
 	)
 	registry.depositHandler = handler
@@ -32,7 +32,7 @@ func (registry *DriverInterfaceRegistry) Initialize(
 func (registry *DriverInterfaceRegistry) DepositHandler() lambdaapigw.LambdaAPIGWBHandler {
 	if registry.depositHandler == nil {
 		registry.Lock()
-		handler := lambdaapigw_adapter.NewDepositHandlerLambdaAPIGateway(
+		handler := lambdaapigw_bridge.NewDepositHandlerLambdaAPIGateway(
 			registry.useCaseRegistry.DepositUseCase(),
 		)
 		registry.depositHandler = handler
@@ -44,7 +44,7 @@ func (registry *DriverInterfaceRegistry) DepositHandler() lambdaapigw.LambdaAPIG
 func (registry *DriverInterfaceRegistry) WithdrawHandler() lambdaapigw.LambdaAPIGWBHandler {
 	if registry.withdrawHandler == nil {
 		registry.Lock()
-		handler := lambdaapigw_adapter.NewWithdrawHandlerLambdaAPIGateway(
+		handler := lambdaapigw_bridge.NewWithdrawHandlerLambdaAPIGateway(
 			registry.useCaseRegistry.WithdrawUseCase(),
 		)
 		registry.withdrawHandler = handler

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"app/internal/driver_interface/lambdaapigw"
+	"app/internal/driver_entrance/lambdaapigw"
 	"app/internal/setup"
 	"context"
 

@@ -1,8 +1,8 @@
 package setup
 
 import (
-	"app/internal/driver_interface/lambdaapigw"
-	"app/internal/driver_interface_adapter/lambdaapigw_adapter"
+	"app/internal/driver_entrance/lambdaapigw"
+	"app/internal/driver_entrance_applogic_bridge/lambdaapigw_bridge"
 	"context"
 	"sync"
 )
@@ -17,7 +17,7 @@ type DriverInterfaceMiddlewareRegistry struct {
 func (registry *DriverInterfaceMiddlewareRegistry) Initialize(ctx context.Context, useCaseRegistry *UseCaseRegistry) {
 	registry.Lock()
 	registry.useCaseRegistry = useCaseRegistry
-	registry.authenticateBeforeMiddleware = lambdaapigw_adapter.NewAuthenticateBeforeMiddleware(
+	registry.authenticateBeforeMiddleware = lambdaapigw_bridge.NewAuthenticateBeforeMiddleware(
 		registry.useCaseRegistry.BankAccountAuthMWUseCase(),
 	)
 	registry.Unlock()
@@ -26,7 +26,7 @@ func (registry *DriverInterfaceMiddlewareRegistry) Initialize(ctx context.Contex
 func (registry *DriverInterfaceMiddlewareRegistry) AuthenticateBeforeMiddleware() lambdaapigw.BeforeMiddleware {
 	if registry.authenticateBeforeMiddleware == nil {
 		registry.Lock()
-		registry.authenticateBeforeMiddleware = lambdaapigw_adapter.NewAuthenticateBeforeMiddleware(
+		registry.authenticateBeforeMiddleware = lambdaapigw_bridge.NewAuthenticateBeforeMiddleware(
 			registry.useCaseRegistry.BankAccountAuthMWUseCase(),
 		)
 		registry.Unlock()

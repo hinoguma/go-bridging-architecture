@@ -1,10 +1,10 @@
-package lambdaapigw_adapter
+package lambdaapigw_bridge
 
 import (
 	"app/internal/applogic/domain/model"
 	"app/internal/applogic/usecase"
 	"app/internal/crosscutting/errors"
-	"app/internal/driver_interface/lambdaapigw"
+	"app/internal/driver_entrance/lambdaapigw"
 	"context"
 )
 
