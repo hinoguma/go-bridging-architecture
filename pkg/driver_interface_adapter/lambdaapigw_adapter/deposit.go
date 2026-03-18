@@ -34,7 +34,7 @@ func (handler DepositHandlerLambdaAPIGateway) Do(ctx context.Context, request la
 		return lambdaapigw.NewValidateErrorResponseFromValidateDetails(validateDetails), nil
 	}
 
-	input := ConvertBodyToUseCaseInput(body)
+	input := ConvertToDepositUseCaseInput(request, body)
 
 	ucOutput, err := handler.uc.Do(ctx, input)
 	if err != nil {
@@ -54,22 +54,32 @@ func DecodeEventToBody(request lambdaapigw.HandlerRequest) (DepositRequestBody, 
 	return body, nil
 }
 
-func ConvertBodyToUseCaseInput(body DepositRequestBody) usecase.DepositUseCaseInput {
+func ConvertToDepositUseCaseInput(req lambdaapigw.HandlerRequest, body DepositRequestBody) usecase.DepositUseCaseInput {
 	return usecase.DepositUseCaseInput{
-		BankAccountID: "",
+		BankAccountID: GetBankAccountIDFromAuthenticatedRequest(req),
+		TransactionID: body.GetTransactionRecordID(),
 		Amount:        body.Money(),
 	}
 }
 
 func ConvertDepositUseCaseOutputToHandlerResponse(output usecase.DepositUseCaseOutput) lambdaapigw.HandlerResponse {
+	if output.NotEnoughBalance {
+		return lambdaapigw.NewErrorResponse(
+			NotEnoughBalanceAPIStatus,
+			"not enough balance",
+			nil,
+		)
+	}
+
 	return lambdaapigw.NewSuccessResponse(
 		fmt.Sprintf("{\"transactionId\": \"%s\"}", output.TransactionRecord.ID.String()),
 	)
 }
 
 type DepositRequestBody struct {
-	Amount   *int64  `json:"amount,omitempty"`
-	Currency *string `json:"currency,omitempty"`
+	TransactionRecordID *string `json:"transactionRecordId,omitempty"`
+	Amount              *int64  `json:"amount,omitempty"`
+	Currency            *string `json:"currency,omitempty"`
 }
 
 func (body DepositRequestBody) GetAmount() int64 {
@@ -91,6 +101,14 @@ func (body DepositRequestBody) Money() model.Money {
 		Amount:   body.GetAmount(),
 		Currency: body.GetCurrency(),
 	}
+}
+
+func (body DepositRequestBody) GetTransactionRecordID() *model.TransactionRecordID {
+	if body.TransactionRecordID == nil {
+		return nil
+	}
+	id := model.TransactionRecordID(*body.TransactionRecordID)
+	return &id
 }
 
 func ValidateDepositRequestBody(body DepositRequestBody) []crosscutting.ValidateDetail {
@@ -122,3 +140,5 @@ func ValidateDepositRequestBody(body DepositRequestBody) []crosscutting.Validate
 	}
 	return details
 }
+
+const NotEnoughBalanceAPIStatus int = 460

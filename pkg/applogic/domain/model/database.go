@@ -61,7 +61,7 @@ type DBTransactionBeginRequest struct {
 	ID *DBTransactionID
 }
 
-func (model DBTransactionBeginRequest) HasTransactionID() bool {
+func (model DBTransactionBeginRequest) HasDBTransactionID() bool {
 	return model.ID != nil
 }
 
@@ -83,7 +83,7 @@ type UseDBTransaction struct {
 	TxID *DBTransactionID
 }
 
-func (model UseDBTransaction) HasTransactionID() bool {
+func (model UseDBTransaction) HasDBTransactionID() bool {
 	return model.TxID != nil
 }
 
@@ -107,7 +107,7 @@ type DBOperationOptions struct {
 	TransactionID *DBTransactionID
 }
 
-func (options DBOperationOptions) HasTransactionID() bool {
+func (options DBOperationOptions) HasDBTransactionID() bool {
 	return options.TransactionID != nil
 }
 

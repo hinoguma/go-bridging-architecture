@@ -10,11 +10,12 @@ import (
 
 type DepositUseCaseInput struct {
 	BankAccountID model.BankAccountID
+	TransactionID *model.TransactionRecordID
 	Amount        model.Money
 }
 
-func (input DepositUseCaseInput) DepositRequest() model.DepositRequest {
-	return model.DepositRequest{
+func (input DepositUseCaseInput) DepositServiceRequest() model.DepositServiceRequest {
+	return model.DepositServiceRequest{
 		BankAccountID: input.BankAccountID,
 		Amount:        input.Amount,
 	}
@@ -22,6 +23,7 @@ func (input DepositUseCaseInput) DepositRequest() model.DepositRequest {
 
 type DepositUseCaseOutput struct {
 	TransactionRecord model.TransactionRecord
+	NotEnoughBalance  bool
 }
 
 type DepositUseCase interface {
@@ -44,7 +46,7 @@ type depositUseCase struct {
 }
 
 func (useCase depositUseCase) Do(ctx context.Context, input DepositUseCaseInput) (DepositUseCaseOutput, error) {
-	depositReq := input.DepositRequest()
+	depositReq := input.DepositServiceRequest()
 
 	txId, err := useCase.dbTransactionManager.Begin(ctx, model.DBTransactionBeginRequest{})
 	if err != nil {
@@ -52,24 +54,31 @@ func (useCase depositUseCase) Do(ctx context.Context, input DepositUseCaseInput)
 	}
 	depositReq.SetTransactionID(txId)
 
-	depositRes, err := func() (model.DepositResult, error) {
+	depositRes, err := func() (model.DepositServiceResult, error) {
 		depositRes, err := useCase.depositService.Do(ctx, depositReq)
 		if err != nil {
-			return model.DepositResult{}, errors.Lift(err)
+			return model.DepositServiceResult{}, errors.Lift(err)
 		}
 
 		err = useCase.dbTransactionManager.Commit(ctx, depositRes.TxID)
 		if err != nil {
-			return model.DepositResult{}, errors.Lift(err)
+			return model.DepositServiceResult{}, errors.Lift(err)
 		}
 		return depositRes, nil
 	}()
+
 	if err != nil {
 		rollbackErr := useCase.dbTransactionManager.Rollback(ctx, txId)
 		if rollbackErr != nil {
-			return DepositUseCaseOutput{}, errors.Lift(rollbackErr)
+			err = errors.AddSubErr(err, rollbackErr)
 		}
-		return DepositUseCaseOutput{}, errors.Lift(err)
+		return DepositUseCaseOutput{}, err
+	}
+
+	if depositRes.NotEnoughBalance {
+		return DepositUseCaseOutput{
+			NotEnoughBalance: true,
+		}, nil
 	}
 
 	return DepositUseCaseOutput{

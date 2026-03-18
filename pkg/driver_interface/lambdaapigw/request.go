@@ -4,6 +4,8 @@ import "github.com/aws/aws-lambda-go/events"
 
 type HandlerRequest struct {
 	Raw events.APIGatewayProxyRequest
+
+	AuthenticatedBankAccountID *string
 }
 
 func (req HandlerRequest) GetHeader(key string) (string, bool) {
@@ -21,6 +23,18 @@ func (req HandlerRequest) GetAuthorization() (string, bool) {
 		return "", false
 	}
 	return val, true
+}
+
+func (req HandlerRequest) SetAuthenticatedBankAccountID(id string) HandlerRequest {
+	req.AuthenticatedBankAccountID = &id
+	return req
+}
+
+func (req HandlerRequest) GetAuthenticatedBankAccountID() string {
+	if req.AuthenticatedBankAccountID == nil {
+		return ""
+	}
+	return *req.AuthenticatedBankAccountID
 }
 
 func NewHandlerRequest(raw events.APIGatewayProxyRequest) HandlerRequest {

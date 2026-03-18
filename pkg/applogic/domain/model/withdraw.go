@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-type DepositServiceRequest struct {
+type WithdrawServiceRequest struct {
 	UseDBTransaction
 	HasRequestAt
 	BankAccountID       BankAccountID
@@ -10,41 +10,41 @@ type DepositServiceRequest struct {
 	Amount              Money
 }
 
-func (model DepositServiceRequest) HasTransactionRecordID() bool {
+func (model WithdrawServiceRequest) HasTransactionRecordID() bool {
 	return model.TransactionRecordID != nil
 }
 
-func (model DepositServiceRequest) GetTransactionRecordID() TransactionRecordID {
+func (model WithdrawServiceRequest) GetTransactionRecordID() TransactionRecordID {
 	if model.TransactionRecordID == nil {
 		return ""
 	}
 	return *model.TransactionRecordID
 }
 
-type DepositServiceResult struct {
+type WithdrawServiceResult struct {
 	BankAccount      BankAccount
 	Record           TransactionRecord
 	TxID             DBTransactionID
 	NotEnoughBalance bool
 }
 
-type DepositResult struct {
+type WithdrawResult struct {
 	BankAccount              BankAccount
 	UpdateBankAccountRequest UpdateBankAccountRequest
 	TransactionRecord        TransactionRecord
 	NotEnoughBalance         bool
 }
 
-func NewDepositResultNotEnoughBalance() DepositResult {
-	return DepositResult{NotEnoughBalance: true}
+func NewWithdrawResultNotEnoughBalance() WithdrawResult {
+	return WithdrawResult{NotEnoughBalance: true}
 }
 
-func NewDepositResult(
+func NewWithdrawResult(
 	bankAccount BankAccount,
 	updateBankAccountRequest UpdateBankAccountRequest,
 	transactionRecord TransactionRecord,
-) DepositResult {
-	return DepositResult{
+) WithdrawResult {
+	return WithdrawResult{
 		BankAccount:              bankAccount,
 		UpdateBankAccountRequest: updateBankAccountRequest,
 		TransactionRecord:        transactionRecord,
@@ -52,10 +52,10 @@ func NewDepositResult(
 	}
 }
 
-func Deposit(account BankAccount, amount Money, t time.Time) DepositResult {
+func Withdraw(account BankAccount, amount Money, t time.Time) WithdrawResult {
 
 	if !account.Amount.GreaterThan(amount) {
-		return NewDepositResultNotEnoughBalance()
+		return NewWithdrawResultNotEnoughBalance()
 	}
 
 	recordId := IssueTransactionRecordID()
@@ -66,7 +66,7 @@ func Deposit(account BankAccount, amount Money, t time.Time) DepositResult {
 		SetLastTransactionTime(t)
 
 	account = updateReq.UpdateItem(account)
-	record := NewTransactionRecordDeposit(account, amount, t)
+	record := NewTransactionRecordWithdraw(account, amount, t)
 
-	return NewDepositResult(account, updateReq, record)
+	return NewWithdrawResult(account, updateReq, record)
 }

@@ -1,6 +1,7 @@
 package lambdaapigw_adapter
 
 import (
+	"app/pkg/applogic/domain/model"
 	"app/pkg/applogic/usecase"
 	"app/pkg/crosscutting/errors"
 	"app/pkg/driver_interface/lambdaapigw"
@@ -56,4 +57,8 @@ func ConvertHandlerRequestToBankAccountAuthMWRequest(request lambdaapigw.Handler
 	return usecase.BankAccountAuthMWRequest{
 		Token: v,
 	}
+}
+
+func GetBankAccountIDFromAuthenticatedRequest(request lambdaapigw.HandlerRequest) model.BankAccountID {
+	return model.BankAccountID(request.GetAuthenticatedBankAccountID())
 }

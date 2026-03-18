@@ -31,3 +31,10 @@ type Money struct {
 	Amount   int64
 	Currency Currency
 }
+
+func (value Money) GreaterThan(other Money) bool {
+	if value.Currency != other.Currency {
+		return false
+	}
+	return value.Amount > other.Amount
+}

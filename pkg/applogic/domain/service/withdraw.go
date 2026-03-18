@@ -7,30 +7,30 @@ import (
 	"context"
 )
 
-type DepositService interface {
-	Do(ctx context.Context, req model.DepositServiceRequest) (model.DepositServiceResult, error)
+type WithdrawService interface {
+	Do(ctx context.Context, req model.WithdrawServiceRequest) (model.WithdrawServiceResult, error)
 }
 
-type depositService struct {
+type withdrawService struct {
 	dbTransactionManager        repository.DBTransactionManager
 	bankAccountRepository       repository.BankAccountRepository
 	transactionRecordRepository repository.TransactionRecordRepository
 }
 
-func NewDepositService(
+func NewWithdrawService(
 	dbTransactionManager repository.DBTransactionManager,
 	bankAccountRepository repository.BankAccountRepository,
 	transactionRecordRepository repository.TransactionRecordRepository,
-) DepositService {
-	return &depositService{
+) WithdrawService {
+	return &withdrawService{
 		dbTransactionManager:        dbTransactionManager,
 		bankAccountRepository:       bankAccountRepository,
 		transactionRecordRepository: transactionRecordRepository,
 	}
 }
 
-func (serv depositService) Do(ctx context.Context, req model.DepositServiceRequest) (model.DepositServiceResult, error) {
-	var result model.DepositServiceResult
+func (serv withdrawService) Do(ctx context.Context, req model.WithdrawServiceRequest) (model.WithdrawServiceResult, error) {
+	var result model.WithdrawServiceResult
 	txId := req.GetTransactionID()
 	if !req.HasDBTransactionID() {
 		newTxId, err := serv.dbTransactionManager.Begin(
@@ -54,7 +54,7 @@ func (serv depositService) Do(ctx context.Context, req model.DepositServiceReque
 		if existingRecord.BankAccountID != req.BankAccountID {
 			return result, errors.New("transaction record does not match with bank account")
 		}
-		if existingRecord.Type != model.TransactionTypeDeposit {
+		if existingRecord.Type != model.TransactionTypeWithdrawal {
 			return result, errors.New("transaction record type is not identical")
 		}
 		result.Record = existingRecord
@@ -68,17 +68,17 @@ func (serv depositService) Do(ctx context.Context, req model.DepositServiceReque
 		return result, errors.Lift(err)
 	}
 
-	depositRes := model.Deposit(
+	withdrawRes := model.Withdraw(
 		bancAccount, req.Amount, req.GetRequestAt(),
 	)
-	if depositRes.NotEnoughBalance {
+	if withdrawRes.NotEnoughBalance {
 		result.NotEnoughBalance = true
 		return result, nil
 	}
 
-	transactionRecord := depositRes.TransactionRecord
-	updateReq := depositRes.UpdateBankAccountRequest
-	updatedBankAccount := depositRes.BankAccount
+	transactionRecord := withdrawRes.TransactionRecord
+	updateReq := withdrawRes.UpdateBankAccountRequest
+	updatedBankAccount := withdrawRes.BankAccount
 
 	transactionRecord, err = serv.transactionRecordRepository.Create(
 		ctx, transactionRecord, model.WithDBTransactionID(txId),

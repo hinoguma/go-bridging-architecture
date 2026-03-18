@@ -51,3 +51,18 @@ func NewTransactionRecordDeposit(
 	record.Create(t)
 	return record
 }
+
+func NewTransactionRecordWithdraw(
+	accountAfter BankAccount, amount Money, t time.Time,
+) TransactionRecord {
+	record := TransactionRecord{
+		ID:               IssueTransactionRecordID(),
+		HasBankUserID:    HasBankUserID{BankUserID: accountAfter.BankUserID},
+		HasBankAccountID: HasBankAccountID{BankAccountID: accountAfter.ID},
+		Type:             TransactionTypeWithdrawal,
+		WithdrawAmount:   amount,
+		AfterAmount:      accountAfter.Amount,
+	}
+	record.Create(t)
+	return record
+}

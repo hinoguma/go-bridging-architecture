@@ -23,7 +23,7 @@ func (client postgreSQLClient) QueryContext(
 ) (*sql.Rows, error) {
 
 	var queryFunc ExecSQLQueryFunc = client.db.QueryContext
-	if options.HasTransactionID() {
+	if options.HasDBTransactionID() {
 		transactionID := options.GetTransactionID()
 		conn, ok := GlobalTxConnectionPool().Get(transactionID)
 		if !ok {
@@ -43,7 +43,7 @@ func (client postgreSQLClient) QueryRowContext(
 	ctx context.Context, query string, args []any, options SQLOperationOptions,
 ) (*sql.Row, error) {
 	var queryFunc ExecSQLQueryRowFunc = client.db.QueryRowContext
-	if options.HasTransactionID() {
+	if options.HasDBTransactionID() {
 		transactionID := options.GetTransactionID()
 		conn, ok := GlobalTxConnectionPool().Get(transactionID)
 		if !ok {

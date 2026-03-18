@@ -69,7 +69,7 @@ type SQLOperationOptions struct {
 	transactionID *string
 }
 
-func (options SQLOperationOptions) HasTransactionID() bool {
+func (options SQLOperationOptions) HasDBTransactionID() bool {
 	return options.transactionID != nil
 }
 

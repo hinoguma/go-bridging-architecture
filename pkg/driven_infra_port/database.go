@@ -9,7 +9,7 @@ func convertModelToSQLOperationOptions(
 	modelOptions model.DBOperationOptions,
 ) rdb.SQLOperationOptions {
 	options := rdb.SQLOperationOptions{}
-	if modelOptions.HasTransactionID() {
+	if modelOptions.HasDBTransactionID() {
 		options.SetTransactionID(
 			modelOptions.GetTransactionID().String(),
 		)

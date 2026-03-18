@@ -21,6 +21,23 @@ func (body ErrorResponseBody) JsonString() string {
 	return string(b)
 }
 
+func NewErrorResponseBody(message string, details []ErrorDetail) ErrorResponseBody {
+	return ErrorResponseBody{
+		Message: message,
+		Details: details,
+	}
+}
+
+func NewErrorResponse(status int, message string, details []ErrorDetail) HandlerResponse {
+	body := NewErrorResponseBody(message, details)
+	return HandlerResponse{
+		Raw: events.APIGatewayProxyResponse{
+			StatusCode: status,
+			Body:       body.JsonString(),
+		},
+	}
+}
+
 func NewValidateErrorResponseBody(details []ErrorDetail) ErrorResponseBody {
 	return ErrorResponseBody{
 		Message: "validation error",
