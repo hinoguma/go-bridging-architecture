@@ -1,8 +1,8 @@
 package main
 
 import (
-	"app/pkg/driver_interface/lambdaapigw"
-	"app/pkg/setup"
+	"app/internal/driver_interface/lambdaapigw"
+	"app/internal/setup"
 	"context"
 
 	"github.com/aws/aws-lambda-go/events"

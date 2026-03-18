@@ -1,14 +1,14 @@
 package main
 
 import (
-	"app/pkg/crosscutting"
-	"app/pkg/crosscutting/errors"
-	"app/pkg/crosscutting/infra"
-	"app/pkg/crosscutting/log"
-	"app/pkg/crosscutting/timer"
-	"app/pkg/driven_infra/postgres"
-	"app/pkg/driver_interface/lambdaapigw"
-	"app/pkg/setup"
+	"app/internal/crosscutting"
+	"app/internal/crosscutting/errors"
+	"app/internal/crosscutting/infra"
+	"app/internal/crosscutting/log"
+	"app/internal/crosscutting/timer"
+	"app/internal/driven_infra/postgres"
+	"app/internal/driver_interface/lambdaapigw"
+	"app/internal/setup"
 	"context"
 
 	"github.com/aws/aws-lambda-go/events"
