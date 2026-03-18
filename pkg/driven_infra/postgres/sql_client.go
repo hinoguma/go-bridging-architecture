@@ -6,6 +6,47 @@ import (
 	"database/sql"
 )
 
+type SQLClient interface {
+	GetDB() *sql.DB
+
+	QueryContext(
+		ctx context.Context,
+		query string,
+		args []any,
+		options SQLOperationOptions,
+	) (*sql.Rows, error)
+
+	QueryRowContext(
+		ctx context.Context,
+		query string,
+		args []any,
+		options SQLOperationOptions,
+	) (*sql.Row, error)
+
+	GetRowByID(
+		ctx context.Context,
+		tableName string,
+		id SQLRecordID,
+		fields []string,
+		options SQLOperationOptions,
+	) (*sql.Row, error)
+
+	CreateRow(
+		ctx context.Context,
+		tableName string,
+		item SQLDatabaseRecord,
+		options SQLOperationOptions,
+	) (*sql.Row, error)
+
+	UpdateRowByStrID(
+		ctx context.Context,
+		tableName string,
+		id SQLRecordID,
+		updateFields UpdateFieldRequests,
+		options SQLOperationOptions,
+	) (*sql.Row, error)
+}
+
 type postgreSQLClient struct {
 	db *sql.DB
 }
@@ -71,7 +112,7 @@ func (client postgreSQLClient) GetRowByID(
 func (client postgreSQLClient) CreateRow(
 	ctx context.Context,
 	tableName string,
-	item SQLDatabaseItem,
+	item SQLDatabaseRecord,
 	options SQLOperationOptions,
 ) (*sql.Row, error) {
 	query, args := BuildInsertQuery(tableName, item.ToMap())

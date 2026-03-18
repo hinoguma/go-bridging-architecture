@@ -8,63 +8,6 @@ import (
 	"strings"
 )
 
-type SQLRecordID struct {
-	str *string
-	int *int64
-}
-
-func (value SQLRecordID) Value() any {
-	if value.str != nil {
-		return *value.str
-	}
-	if value.int != nil {
-		return *value.int
-	}
-	return nil
-}
-
-func (value SQLRecordID) IsString() bool {
-	return value.str != nil
-}
-
-func (value SQLRecordID) IsInt() bool {
-	return value.int != nil
-}
-
-func (value SQLRecordID) String() string {
-	if value.str != nil {
-		return *value.str
-	}
-	if value.int != nil {
-		return fmt.Sprintf("%d", *value.int)
-	}
-	return ""
-}
-
-func (value SQLRecordID) Int() int64 {
-	if value.int != nil {
-		return *value.int
-	}
-	return 0
-}
-
-func SQLStrID(id string) SQLRecordID {
-	return SQLRecordID{
-		str: &id,
-	}
-}
-
-func SQLIntID(id int64) SQLRecordID {
-	return SQLRecordID{
-		int: &id,
-	}
-}
-
-type SQLDatabaseItem interface {
-	ToMap() map[string]interface{}
-	SetBySQLRow(row *sql.Row) error
-}
-
 type LockMode string
 
 const (
@@ -106,47 +49,6 @@ func (options SQLOperationOptions) GetLockMode() LockMode {
 
 func (options *SQLOperationOptions) SetLockMode(lockMode LockMode) {
 	options.lockMode = &lockMode
-}
-
-type SQLClient interface {
-	GetDB() *sql.DB
-
-	QueryContext(
-		ctx context.Context,
-		query string,
-		args []any,
-		options SQLOperationOptions,
-	) (*sql.Rows, error)
-
-	QueryRowContext(
-		ctx context.Context,
-		query string,
-		args []any,
-		options SQLOperationOptions,
-	) (*sql.Row, error)
-
-	GetRowByID(
-		ctx context.Context,
-		tableName string,
-		id SQLRecordID,
-		fields []string,
-		options SQLOperationOptions,
-	) (*sql.Row, error)
-
-	CreateRow(
-		ctx context.Context,
-		tableName string,
-		item SQLDatabaseItem,
-		options SQLOperationOptions,
-	) (*sql.Row, error)
-
-	UpdateRowByStrID(
-		ctx context.Context,
-		tableName string,
-		id SQLRecordID,
-		updateFields UpdateFieldRequests,
-		options SQLOperationOptions,
-	) (*sql.Row, error)
 }
 
 type ExecSQLQueryFunc func(ctx context.Context, query string, args ...any) (*sql.Rows, error)
