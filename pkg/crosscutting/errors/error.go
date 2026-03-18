@@ -18,6 +18,10 @@ func Wrap(err error, message string) error {
 	return serrors.Wrap(err, message)
 }
 
+func WrapWithCtx(err error, message string, ctx context.Context) error {
+	return AddCtx(Wrap(err, message), ctx)
+}
+
 func Lift(err error) error {
 	return serrors.Lift(err)
 }

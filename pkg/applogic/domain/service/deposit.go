@@ -37,7 +37,7 @@ func (serv depositService) Do(ctx context.Context, req model.DepositServiceReque
 			ctx, model.DBTransactionBeginRequest{},
 		)
 		if err != nil {
-			return result, errors.Lift(err)
+			return result, errors.LiftWithCtx(err, ctx)
 		}
 		txId = newTxId
 	}
@@ -49,13 +49,13 @@ func (serv depositService) Do(ctx context.Context, req model.DepositServiceReque
 			ctx, req.GetTransactionRecordID(), model.WithDBTransactionID(txId),
 		)
 		if err != nil {
-			return result, errors.Lift(err)
+			return result, errors.LiftWithCtx(err, ctx)
 		}
 		if existingRecord.BankAccountID != req.BankAccountID {
-			return result, errors.New("transaction record does not match with bank account")
+			return result, errors.NewWithCtx("transaction record does not match with bank account", ctx)
 		}
 		if existingRecord.Type != model.TransactionTypeDeposit {
-			return result, errors.New("transaction record type is not identical")
+			return result, errors.NewWithCtx("transaction record type is not identical", ctx)
 		}
 		result.Record = existingRecord
 		return result, nil
@@ -65,7 +65,7 @@ func (serv depositService) Do(ctx context.Context, req model.DepositServiceReque
 		ctx, req.BankAccountID, model.WithDBTransactionID(txId),
 	)
 	if err != nil {
-		return result, errors.Lift(err)
+		return result, errors.LiftWithCtx(err, ctx)
 	}
 
 	depositRes := model.Deposit(
@@ -80,14 +80,14 @@ func (serv depositService) Do(ctx context.Context, req model.DepositServiceReque
 		ctx, transactionRecord, model.WithDBTransactionID(txId),
 	)
 	if err != nil {
-		return result, errors.Lift(err)
+		return result, errors.LiftWithCtx(err, ctx)
 	}
 
 	err = serv.bankAccountRepository.Update(
 		ctx, updateReq, model.WithDBTransactionID(txId),
 	)
 	if err != nil {
-		return result, errors.Lift(err)
+		return result, errors.LiftWithCtx(err, ctx)
 	}
 
 	result.BankAccount = updatedBankAccount

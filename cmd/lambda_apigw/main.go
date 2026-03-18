@@ -4,6 +4,7 @@ import (
 	"app/pkg/crosscutting"
 	"app/pkg/crosscutting/errors"
 	"app/pkg/crosscutting/infra"
+	"app/pkg/crosscutting/log"
 	"app/pkg/crosscutting/timer"
 	"app/pkg/driven_infra/rdb"
 	"app/pkg/driver_interface/lambdaapigw"
@@ -34,6 +35,7 @@ var apiRouter APIRouter
 func coldStart() error {
 	// setup application
 	ctx := context.Background()
+	ctx = context.WithValue(ctx, lambdaapigw.RequestIDKey, "cold_start_request_id")
 
 	// set up crosscutting infrastructure
 	crosscutting.SetGlobalRandStrIDGenerator(
@@ -41,7 +43,6 @@ func coldStart() error {
 	)
 	timer.SetGlobalTimeGenerator(infra.NewJstTimeGenerator())
 	errors.SetContextRequestIDKey(lambdaapigw.RequestIDKey)
-	context.WithValue(ctx, lambdaapigw.RequestIDKey, "cold_start_request_id")
 
 	// set up user call -> app infra
 	db, err := rdb.NewPostgresDBFromEnv()
@@ -71,9 +72,9 @@ func lambdaHandler(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 
 	LambdaContext, ok := lambdacontext.FromContext(ctx)
 	if ok {
-		context.WithValue(ctx, lambdaapigw.RequestIDKey, LambdaContext.AwsRequestID)
+		ctx = context.WithValue(ctx, lambdaapigw.RequestIDKey, LambdaContext.AwsRequestID)
 	} else {
-		context.WithValue(ctx, lambdaapigw.RequestIDKey, "unknown_request_id")
+		ctx = context.WithValue(ctx, lambdaapigw.RequestIDKey, "unknown_request_id")
 	}
 
 	beforeMiddlewares, handler, afterMiddlewares := apiRouter.Do(ctx, event)
@@ -83,8 +84,7 @@ func lambdaHandler(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 	)
 	handlerResp, err := runner.Run(ctx, lambdaapigw.NewHandlerRequest(event))
 	if err != nil {
-		fmt.Printf(errors.ToJsonString(err))
+		log.Error(log.ErrorLogRequest{Err: err})
 	}
-
 	return handlerResp.Raw, err
 }

@@ -57,7 +57,7 @@ func NewCognitoClient(ctx context.Context) (CognitoClient, error) {
 	// load aws config from environment variables
 	cnf, err := NewAWSConfig(ctx)
 	if err != nil {
-		return nil, errors.LiftWithCtx(err, ctx)
+		return nil, errors.Lift(err)
 	}
 	return &cognitoClient{
 		sdkClient: cognitoidentityprovider.NewFromConfig(cnf),
@@ -77,7 +77,7 @@ func (client cognitoClient) VerifyAccessToken(
 	result := VerifyTokenResult[CognitoAccessTokenJWTPayload]{}
 	header, payload, err := token.GetHeaderAndPayload()
 	if err != nil {
-		result.Err = errors.Lift(err)
+		result.Err = errors.LiftWithCtx(err, ctx)
 		return result
 	}
 	result.Header = header
@@ -86,7 +86,7 @@ func (client cognitoClient) VerifyAccessToken(
 	// verify signature
 	result.IsValidSignature, err = client.VerifySignature(ctx, token, userPoolID)
 	if err != nil {
-		result.Err = errors.Lift(err)
+		result.Err = errors.LiftWithCtx(err, ctx)
 		return result
 	}
 	if !result.IsValidSignature {
@@ -117,7 +117,7 @@ func (client cognitoClient) VerifyAccessToken(
 	return result
 }
 
-func (client cognitoClient) GetJWK(userPoolID string) (JSONWebKeys, error) {
+func (client cognitoClient) GetJWK(ctx context.Context, userPoolID string) (JSONWebKeys, error) {
 	resp, err := http.Get(
 		fmt.Sprintf(
 			"https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json)",
@@ -128,15 +128,15 @@ func (client cognitoClient) GetJWK(userPoolID string) (JSONWebKeys, error) {
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		return JSONWebKeys{}, errors.Lift(err)
+		return JSONWebKeys{}, errors.LiftWithCtx(err, ctx)
 	}
 	if resp == nil {
-		return JSONWebKeys{}, errors.New("http response is empty")
+		return JSONWebKeys{}, errors.NewWithCtx("http response is empty", ctx)
 	}
 	var keys JSONWebKeys
 	err = json.NewDecoder(resp.Body).Decode(&keys)
 	if err != nil {
-		return keys, errors.Lift(err)
+		return keys, errors.LiftWithCtx(err, ctx)
 	}
 	return keys, nil
 }
@@ -146,32 +146,32 @@ func (client cognitoClient) VerifySignature(
 	token CognitoTokener,
 	userPoolID string,
 ) (bool, error) {
-	keys, err := client.GetJWK(userPoolID)
+	keys, err := client.GetJWK(ctx, userPoolID)
 	if err != nil {
-		return false, errors.Lift(err)
+		return false, errors.LiftWithCtx(err, ctx)
 	}
 	cognitoToken := token.CognitoTokenJWT()
 	header, err := cognitoToken.GetHeader()
 	if err != nil {
-		return false, errors.Lift(err)
+		return false, errors.LiftWithCtx(err, ctx)
 	}
 	if header.Algorithm != "RS256" {
-		return false, errors.New("unsupported alg, expected RS256")
+		return false, errors.NewWithCtx("unsupported alg, expected RS256", ctx)
 	}
 	jwk, ok := keys.GetByKid(header.KeyID)
 	if !ok {
-		err = errors.New("failed to get jwk by kid")
+		err = errors.NewWithCtx("failed to get jwk by kid", ctx)
 		return false, errors.AddTagString(err, "kid", header.KeyID)
 	}
 
 	pub, err := jwk.toRSAPublicKey()
 	if err != nil {
-		return false, errors.Lift(err)
+		return false, errors.LiftWithCtx(err, ctx)
 	}
 	headerStr, payloadStr, sig := cognitoToken.Parts()
 	hash := sha256.Sum256([]byte(headerStr + "." + payloadStr))
 	if err = rsa.VerifyPKCS1v15(pub, crypto.SHA256, hash[:], []byte(sig)); err != nil {
-		return false, errors.Lift(err)
+		return false, errors.LiftWithCtx(err, ctx)
 	}
 	return true, nil
 }
@@ -188,7 +188,7 @@ func (client cognitoClient) GetUserInfo(
 		output = *rawOutput
 	}
 	if err != nil {
-		return output, errors.Lift(err)
+		return output, errors.LiftWithCtx(err, ctx)
 	}
 	return output, nil
 }

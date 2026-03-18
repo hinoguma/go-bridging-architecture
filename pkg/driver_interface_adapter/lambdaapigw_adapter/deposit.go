@@ -26,7 +26,7 @@ func (handler DepositHandlerLambdaAPIGateway) Do(ctx context.Context, request la
 
 	body, err := DecodeEventToDepositRequestBody(request)
 	if err != nil {
-		return lambdaapigw.NewBodyDecodingErrorResponse(), errors.Lift(err)
+		return lambdaapigw.NewBodyDecodingErrorResponse(), errors.LiftWithCtx(err, ctx)
 	}
 
 	validateDetails := ValidateDepositRequestBody(body)

@@ -1,6 +1,7 @@
 package driven_infra_aws
 
 import (
+	"app/pkg/crosscutting/errors"
 	"context"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -11,5 +12,9 @@ import (
 // https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/getting-started.html
 func NewAWSConfig(ctx context.Context) (aws.Config, error) {
 	// load aws config from environment variables
-	return config.LoadDefaultConfig(ctx)
+	conf, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		return aws.Config{}, errors.LiftWithCtx(err, ctx)
+	}
+	return conf, nil
 }

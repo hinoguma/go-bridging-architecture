@@ -30,7 +30,7 @@ func (authenticator bankAccountAuthenticator) VerifyToken(
 		ctx, "", driven_infra_aws.CognitoAccessTokenJWT(req.Token), req.GetRequestAt(),
 	)
 	if res.IsErr() {
-		result.Err = errors.Lift(res.Err)
+		result.Err = errors.LiftWithCtx(res.Err, ctx)
 		return result
 	}
 	if !res.IsValid() {
@@ -43,12 +43,12 @@ func (authenticator bankAccountAuthenticator) VerifyToken(
 	}
 	userInfo, err := authenticator.cognitoClient.GetUserInfo(ctx, req.Token)
 	if err != nil {
-		result.Err = errors.Lift(err)
+		result.Err = errors.LiftWithCtx(err, ctx)
 		return result
 	}
 	result.BankAccountID, err = GetBankAccountIDFromUserInfo(userInfo)
 	if err != nil {
-		result.Err = errors.Lift(err)
+		result.Err = errors.LiftWithCtx(err, ctx)
 		return result
 	}
 	return result

@@ -58,7 +58,7 @@ func (repo transactionRecordRepositorySQL) Get(ctx context.Context, id model.Tra
 
 	err = sqlItem.SetBySQLRow(row)
 	if err != nil {
-		return model.TransactionRecord{}, errors.Lift(err)
+		return model.TransactionRecord{}, errors.LiftWithCtx(err, ctx)
 	}
 	return sqlItem.ToModel(), nil
 }
@@ -80,7 +80,7 @@ func (repo transactionRecordRepositorySQL) Create(
 	}
 	err = sqlItem.SetBySQLRow(sqlRow)
 	if err != nil {
-		return model.TransactionRecord{}, errors.Lift(err)
+		return model.TransactionRecord{}, errors.LiftWithCtx(err, ctx)
 	}
 	return sqlItem.ToModel(), nil
 }

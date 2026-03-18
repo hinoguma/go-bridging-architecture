@@ -26,7 +26,7 @@ func (handler WithdrawHandlerLambdaAPIGateway) Do(ctx context.Context, request l
 
 	body, err := DecodeEventToWithdrawRequestBody(request)
 	if err != nil {
-		return lambdaapigw.NewBodyDecodingErrorResponse(), errors.Lift(err)
+		return lambdaapigw.NewBodyDecodingErrorResponse(), errors.LiftWithCtx(err, ctx)
 	}
 
 	validateDetails := ValidateWithdrawRequestBody(body)

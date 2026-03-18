@@ -63,7 +63,7 @@ func (repo bankAccountRepositorySQL) Get(ctx context.Context, id model.BankAccou
 
 	err = sqlItem.SetBySQLRow(row)
 	if err != nil {
-		return model.BankAccount{}, errors.Lift(err)
+		return model.BankAccount{}, errors.LiftWithCtx(err, ctx)
 	}
 	return sqlItem.ToModel(), nil
 }
@@ -85,7 +85,7 @@ func (repo bankAccountRepositorySQL) Create(
 	}
 	err = sqlItem.SetBySQLRow(sqlRow)
 	if err != nil {
-		return model.BankAccount{}, errors.Lift(err)
+		return model.BankAccount{}, errors.LiftWithCtx(err, ctx)
 	}
 	return sqlItem.ToModel(), nil
 }

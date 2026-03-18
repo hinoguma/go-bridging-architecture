@@ -54,6 +54,7 @@ func (service bankAccountAuthenticateService) Authenticate(
 		result.Err = errors.Lift(err)
 		return result
 	}
+	// todo
 	result.BankAccount = user
 	return result
 }

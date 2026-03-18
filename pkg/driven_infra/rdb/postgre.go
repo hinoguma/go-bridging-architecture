@@ -47,16 +47,14 @@ func (client postgreSQLClient) QueryRowContext(
 		transactionID := options.GetTransactionID()
 		conn, ok := GlobalTxConnectionPool().Get(transactionID)
 		if !ok {
-			return nil, NewTransactionNotFoundError(transactionID)
+			err := NewTransactionNotFoundError(transactionID)
+			return nil, errors.LiftWithCtx(err, ctx)
 		}
 		queryFunc = conn.tx.QueryRowContext
 	}
 
-	rows, err := SQLQueryRowContext(ctx, queryFunc, query, args...)
-	if err != nil {
-		return nil, errors.Lift(err)
-	}
-	return rows, nil
+	row := SQLQueryRowContext(ctx, queryFunc, query, args...)
+	return row, nil
 }
 
 func (client postgreSQLClient) GetRowByID(

@@ -181,14 +181,15 @@ func SQLQueryContext(ctx context.Context, queryFunc ExecSQLQueryFunc, query stri
 	return row, nil
 }
 
-func SQLQueryRowContext(ctx context.Context, queryFunc ExecSQLQueryRowFunc, query string, args ...any) (*sql.Row, error) {
+func SQLQueryRowContext(ctx context.Context, queryFunc ExecSQLQueryRowFunc, query string, args ...any) *sql.Row {
 	// log, metrics, tracing, etc.
 
 	row := queryFunc(ctx, query, args...)
+
 	// log, metrics, tracing, etc.
 
 	// success
-	return row, nil
+	return row
 }
 
 func BuildSelectQueryWithId(tableName string, id SQLRecordID, fields []string) (string, []any) {
