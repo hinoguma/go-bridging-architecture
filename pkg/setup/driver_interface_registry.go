@@ -11,6 +11,7 @@ type DriverInterfaceRegistry struct {
 	sync.Mutex
 	useCaseRegistry *UseCaseRegistry
 	depositHandler  lambdaapigw.LambdaAPIGWBHandler
+	withdrawHandler lambdaapigw.LambdaAPIGWBHandler
 }
 
 func (registry *DriverInterfaceRegistry) Initialize(
@@ -38,6 +39,18 @@ func (registry *DriverInterfaceRegistry) DepositHandler() lambdaapigw.LambdaAPIG
 		registry.Unlock()
 	}
 	return registry.depositHandler
+}
+
+func (registry *DriverInterfaceRegistry) WithdrawHandler() lambdaapigw.LambdaAPIGWBHandler {
+	if registry.withdrawHandler == nil {
+		registry.Lock()
+		handler := lambdaapigw_adapter.NewWithdrawHandlerLambdaAPIGateway(
+			registry.useCaseRegistry.WithdrawUseCase(),
+		)
+		registry.withdrawHandler = handler
+		registry.Unlock()
+	}
+	return registry.withdrawHandler
 }
 
 func GetDriverInterfaceRegistry() *DriverInterfaceRegistry {

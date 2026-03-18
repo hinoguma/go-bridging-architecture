@@ -2,6 +2,8 @@ package model
 
 import "time"
 
+const MaxWithdrawAmountOneTime = 1_000_000
+
 type WithdrawServiceRequest struct {
 	UseDBTransaction
 	HasRequestAt

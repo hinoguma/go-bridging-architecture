@@ -28,7 +28,7 @@ func (router APIRouter) Do(
 	if event.Path == "/bank/account/deposit" && event.HTTPMethod == "POST" {
 		handler = router.driverInterfaceRegistry.DepositHandler()
 	} else if event.Path == "/bank/account/withdraw" && event.HTTPMethod == "POST" {
-		// handler = router.driverInterfaceRegistry.GetWithdrawHandler()
+		handler = router.driverInterfaceRegistry.WithdrawHandler()
 	}
 
 	return beforeMiddlewares, handler, afterMiddlewares

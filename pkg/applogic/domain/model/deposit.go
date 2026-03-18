@@ -22,21 +22,15 @@ func (model DepositServiceRequest) GetTransactionRecordID() TransactionRecordID 
 }
 
 type DepositServiceResult struct {
-	BankAccount      BankAccount
-	Record           TransactionRecord
-	TxID             DBTransactionID
-	NotEnoughBalance bool
+	BankAccount BankAccount
+	Record      TransactionRecord
+	TxID        DBTransactionID
 }
 
 type DepositResult struct {
 	BankAccount              BankAccount
 	UpdateBankAccountRequest UpdateBankAccountRequest
 	TransactionRecord        TransactionRecord
-	NotEnoughBalance         bool
-}
-
-func NewDepositResultNotEnoughBalance() DepositResult {
-	return DepositResult{NotEnoughBalance: true}
 }
 
 func NewDepositResult(
@@ -48,15 +42,10 @@ func NewDepositResult(
 		BankAccount:              bankAccount,
 		UpdateBankAccountRequest: updateBankAccountRequest,
 		TransactionRecord:        transactionRecord,
-		NotEnoughBalance:         false,
 	}
 }
 
 func Deposit(account BankAccount, amount Money, t time.Time) DepositResult {
-
-	if !account.Amount.GreaterThan(amount) {
-		return NewDepositResultNotEnoughBalance()
-	}
 
 	recordId := IssueTransactionRecordID()
 

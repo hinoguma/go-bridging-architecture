@@ -11,8 +11,9 @@ type UseCaseRegistry struct {
 	domainRepositoryRegistry *DomainRepositoryRegistry
 	domainServiceRegistry    *DomainServiceRegistry
 
-	depositUseCase           usecase.DepositUseCase
 	bankAccountAuthMWUseCase usecase.BankAccountAuthMWUseCase
+	depositUseCase           usecase.DepositUseCase
+	withdrawUseCase          usecase.WithdrawUseCase
 }
 
 func (registry *UseCaseRegistry) Initialize(
@@ -23,13 +24,6 @@ func (registry *UseCaseRegistry) Initialize(
 	registry.Lock()
 	registry.domainServiceRegistry = domainServiceRegistry
 	registry.domainRepositoryRegistry = domainRepositoryRegistry
-	registry.depositUseCase = usecase.NewDepositUseCase(
-		registry.domainServiceRegistry.DepositService(),
-		registry.domainRepositoryRegistry.DBTransactionManager(),
-	)
-	registry.bankAccountAuthMWUseCase = usecase.NewBankAccountAuthMWUseCase(
-		registry.domainServiceRegistry.BankAccountAuthService(),
-	)
 	registry.Unlock()
 }
 
@@ -54,6 +48,18 @@ func (registry *UseCaseRegistry) BankAccountAuthMWUseCase() usecase.BankAccountA
 		registry.Unlock()
 	}
 	return registry.bankAccountAuthMWUseCase
+}
+
+func (registry *UseCaseRegistry) WithdrawUseCase() usecase.WithdrawUseCase {
+	if registry.withdrawUseCase == nil {
+		registry.Lock()
+		registry.withdrawUseCase = usecase.NewWithdrawUseCase(
+			registry.domainServiceRegistry.WithdrawService(),
+			registry.domainRepositoryRegistry.DBTransactionManager(),
+		)
+		registry.Unlock()
+	}
+	return registry.withdrawUseCase
 }
 
 func GetUseCaseRegistry() *UseCaseRegistry {

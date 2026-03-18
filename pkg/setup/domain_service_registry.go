@@ -11,6 +11,7 @@ type DomainServiceRegistry struct {
 	domainRepositoryRegistry *DomainRepositoryRegistry
 
 	depositService         service.DepositService
+	withdrawService        service.WithdrawService
 	bankAccountAuthService service.BankAccountAuthService
 }
 
@@ -42,6 +43,19 @@ func (registry *DomainServiceRegistry) DepositService() service.DepositService {
 		registry.Unlock()
 	}
 	return registry.depositService
+}
+
+func (registry *DomainServiceRegistry) WithdrawService() service.WithdrawService {
+	if registry.withdrawService == nil {
+		registry.Lock()
+		registry.withdrawService = service.NewWithdrawService(
+			registry.domainRepositoryRegistry.DBTransactionManager(),
+			registry.domainRepositoryRegistry.BankAccountRepository(),
+			registry.domainRepositoryRegistry.TransactionRecordRepository(),
+		)
+		registry.Unlock()
+	}
+	return registry.withdrawService
 }
 
 func (registry *DomainServiceRegistry) BankAccountAuthService() service.BankAccountAuthService {

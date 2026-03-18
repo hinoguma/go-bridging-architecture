@@ -11,42 +11,42 @@ import (
 	"fmt"
 )
 
-func NewDepositHandlerLambdaAPIGateway(
-	uc usecase.DepositUseCase,
+func NewWithdrawHandlerLambdaAPIGateway(
+	uc usecase.WithdrawUseCase,
 ) lambdaapigw.LambdaAPIGWBHandler {
-	return DepositHandlerLambdaAPIGateway{uc: uc}
+	return WithdrawHandlerLambdaAPIGateway{uc: uc}
 }
 
-type DepositHandlerLambdaAPIGateway struct {
-	uc usecase.DepositUseCase
+type WithdrawHandlerLambdaAPIGateway struct {
+	uc usecase.WithdrawUseCase
 }
 
-func (handler DepositHandlerLambdaAPIGateway) Do(ctx context.Context, request lambdaapigw.HandlerRequest) (lambdaapigw.HandlerResponse, error) {
+func (handler WithdrawHandlerLambdaAPIGateway) Do(ctx context.Context, request lambdaapigw.HandlerRequest) (lambdaapigw.HandlerResponse, error) {
 	internalServerErr := lambdaapigw.NewInternalServerErrorResponse()
 
-	body, err := DecodeEventToDepositRequestBody(request)
+	body, err := DecodeEventToWithdrawRequestBody(request)
 	if err != nil {
 		return lambdaapigw.NewBodyDecodingErrorResponse(), errors.Lift(err)
 	}
 
-	validateDetails := ValidateDepositRequestBody(body)
+	validateDetails := ValidateWithdrawRequestBody(body)
 	if len(validateDetails) > 0 {
 		return lambdaapigw.NewValidateErrorResponseFromValidateDetails(validateDetails), nil
 	}
 
-	input := ConvertToDepositUseCaseInput(request, body)
+	input := ConvertToWithdrawUseCaseInput(request, body)
 
 	ucOutput, err := handler.uc.Do(ctx, input)
 	if err != nil {
 		return internalServerErr, errors.Lift(err)
 	}
 
-	resp := ConvertDepositUseCaseOutputToHandlerResponse(ucOutput)
+	resp := ConvertWithdrawUseCaseOutputToHandlerResponse(ucOutput)
 	return resp, nil
 }
 
-func DecodeEventToDepositRequestBody(request lambdaapigw.HandlerRequest) (DepositRequestBody, error) {
-	body := DepositRequestBody{}
+func DecodeEventToWithdrawRequestBody(request lambdaapigw.HandlerRequest) (WithdrawRequestBody, error) {
+	body := WithdrawRequestBody{}
 	err := json.Unmarshal([]byte(request.Raw.Body), &body)
 	if err != nil {
 		return body, errors.Lift(err)
@@ -54,48 +54,56 @@ func DecodeEventToDepositRequestBody(request lambdaapigw.HandlerRequest) (Deposi
 	return body, nil
 }
 
-func ConvertToDepositUseCaseInput(req lambdaapigw.HandlerRequest, body DepositRequestBody) usecase.DepositUseCaseInput {
-	return usecase.DepositUseCaseInput{
+func ConvertToWithdrawUseCaseInput(req lambdaapigw.HandlerRequest, body WithdrawRequestBody) usecase.WithdrawUseCaseInput {
+	return usecase.WithdrawUseCaseInput{
 		BankAccountID: GetBankAccountIDFromAuthenticatedRequest(req),
 		TransactionID: body.GetTransactionRecordID(),
 		Amount:        body.Money(),
 	}
 }
 
-func ConvertDepositUseCaseOutputToHandlerResponse(output usecase.DepositUseCaseOutput) lambdaapigw.HandlerResponse {
+func ConvertWithdrawUseCaseOutputToHandlerResponse(output usecase.WithdrawUseCaseOutput) lambdaapigw.HandlerResponse {
+	if output.NotEnoughBalance {
+		return lambdaapigw.NewErrorResponse(
+			NotEnoughBalanceAPIStatus,
+			"your balance is not enough for this withdraw",
+			nil,
+		)
+	}
+
 	return lambdaapigw.NewSuccessResponse(
 		fmt.Sprintf("{\"transactionId\": \"%s\"}", output.TransactionRecord.ID.String()),
 	)
 }
 
-type DepositRequestBody struct {
+type WithdrawRequestBody struct {
 	TransactionRecordID *string `json:"transactionRecordId,omitempty"`
 	Amount              *int64  `json:"amount,omitempty"`
 	Currency            *string `json:"currency,omitempty"`
 }
 
-func (body DepositRequestBody) GetAmount() int64 {
+func (body WithdrawRequestBody) GetAmount() int64 {
 	if body.Amount == nil {
 		return 0
 	}
 	return *body.Amount
 }
 
-func (body DepositRequestBody) GetCurrency() model.Currency {
+func (body WithdrawRequestBody) GetCurrency() model.Currency {
 	if body.Currency == nil {
 		return ""
 	}
 	return model.Currency(*body.Currency)
 }
 
-func (body DepositRequestBody) Money() model.Money {
+func (body WithdrawRequestBody) Money() model.Money {
 	return model.Money{
 		Amount:   body.GetAmount(),
 		Currency: body.GetCurrency(),
 	}
 }
 
-func (body DepositRequestBody) GetTransactionRecordID() *model.TransactionRecordID {
+func (body WithdrawRequestBody) GetTransactionRecordID() *model.TransactionRecordID {
 	if body.TransactionRecordID == nil {
 		return nil
 	}
@@ -103,7 +111,7 @@ func (body DepositRequestBody) GetTransactionRecordID() *model.TransactionRecord
 	return &id
 }
 
-func ValidateDepositRequestBody(body DepositRequestBody) []crosscutting.ValidateDetail {
+func ValidateWithdrawRequestBody(body WithdrawRequestBody) []crosscutting.ValidateDetail {
 	details := make([]crosscutting.ValidateDetail, 0)
 
 	if body.Amount == nil {
@@ -149,3 +157,5 @@ func ValidateDepositRequestBody(body DepositRequestBody) []crosscutting.Validate
 	}
 	return details
 }
+
+const NotEnoughBalanceAPIStatus int = 460

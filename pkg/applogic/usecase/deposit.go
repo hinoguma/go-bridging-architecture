@@ -23,7 +23,6 @@ func (input DepositUseCaseInput) DepositServiceRequest() model.DepositServiceReq
 
 type DepositUseCaseOutput struct {
 	TransactionRecord model.TransactionRecord
-	NotEnoughBalance  bool
 }
 
 type DepositUseCase interface {
@@ -73,12 +72,6 @@ func (useCase depositUseCase) Do(ctx context.Context, input DepositUseCaseInput)
 			err = errors.AddSubErr(err, rollbackErr)
 		}
 		return DepositUseCaseOutput{}, err
-	}
-
-	if depositRes.NotEnoughBalance {
-		return DepositUseCaseOutput{
-			NotEnoughBalance: true,
-		}, nil
 	}
 
 	return DepositUseCaseOutput{

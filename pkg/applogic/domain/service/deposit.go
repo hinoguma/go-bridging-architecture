@@ -71,10 +71,6 @@ func (serv depositService) Do(ctx context.Context, req model.DepositServiceReque
 	depositRes := model.Deposit(
 		bancAccount, req.Amount, req.GetRequestAt(),
 	)
-	if depositRes.NotEnoughBalance {
-		result.NotEnoughBalance = true
-		return result, nil
-	}
 
 	transactionRecord := depositRes.TransactionRecord
 	updateReq := depositRes.UpdateBankAccountRequest
