@@ -50,7 +50,13 @@ func (repo bankAccountRepositorySQL) Get(ctx context.Context, id model.BankAccou
 
 	sqlItem := bankAccountSQLItem{}
 
-	row, err = repo.client.GetRowByID(ctx, rdb.TableBankAccounts, id.String(), sqlItem.Columns(), sqlOptions)
+	row, err = repo.client.GetRowByID(
+		ctx,
+		rdb.TableBankAccounts,
+		rdb.SQLStrID(id.String()),
+		sqlItem.Columns(),
+		sqlOptions,
+	)
 	if err != nil {
 		return model.BankAccount{}, errors.Lift(err)
 	}
@@ -88,7 +94,13 @@ func (repo bankAccountRepositorySQL) Update(ctx context.Context, request model.U
 	sqlOptions := convertOptionalFuncsToSQLOperationOptions(optionaltFuncs)
 
 	updateRequests := convertUpdateBankAccountRequestToUpdateRequests(request)
-	_, err := repo.client.UpdateRowByStrID(ctx, rdb.TableBankAccounts, request.ID.String(), updateRequests, sqlOptions)
+	_, err := repo.client.UpdateRowByStrID(
+		ctx,
+		rdb.TableBankAccounts,
+		rdb.SQLStrID(request.ID.String()),
+		updateRequests,
+		sqlOptions,
+	)
 	if err != nil {
 		return errors.Lift(err)
 	}
@@ -160,29 +172,29 @@ func (item bankAccountSQLItem) ToModel() model.BankAccount {
 
 func (item bankAccountSQLItem) ToMap() map[string]any {
 	return map[string]any{
-		"id":                         item.id,
-		"bank_user_id":               item.bankUserId,
-		"type":                       item.accountType,
-		"amount_number":              item.amountNumber,
-		"amount_currency":            item.amountCurrency,
-		"last_transaction_record_id": item.lastTransactionRecordId,
-		"last_transaction_time":      item.lastTransactionTime,
-		"created_at":                 item.createdAt,
-		"updated_at":                 item.updatedAt,
+		rdb.ColumnID:                      item.id,
+		rdb.ColumnBankUserID:              item.bankUserId,
+		rdb.ColumnType:                    item.accountType,
+		rdb.ColumnAmountNumber:            item.amountNumber,
+		rdb.ColumnAmountCurrency:          item.amountCurrency,
+		rdb.ColumnLastTransactionRecordID: item.lastTransactionRecordId,
+		rdb.ColumnLastTransactionTime:     item.lastTransactionTime,
+		rdb.ColumnCreatedAt:               item.createdAt,
+		rdb.ColumnUpdatedAt:               item.updatedAt,
 	}
 }
 
 func (item bankAccountSQLItem) Columns() []string {
 	return []string{
-		"id",
-		"bank_user_id",
-		"type",
-		"amount_number",
-		"amount_currency",
-		"last_transaction_record_id",
-		"last_transaction_time",
-		"created_at",
-		"updated_at",
+		rdb.ColumnID,
+		rdb.ColumnBankUserID,
+		rdb.ColumnType,
+		rdb.ColumnAmountNumber,
+		rdb.ColumnAmountCurrency,
+		rdb.ColumnLastTransactionRecordID,
+		rdb.ColumnLastTransactionTime,
+		rdb.ColumnCreatedAt,
+		rdb.ColumnUpdatedAt,
 	}
 }
 
@@ -203,14 +215,14 @@ func (item bankAccountSQLItem) Values() []any {
 func convertUpdateBankAccountRequestToUpdateRequests(request model.UpdateBankAccountRequest) rdb.UpdateFieldRequests {
 	var updateRequests rdb.UpdateFieldRequests = make([]rdb.UpdateFieldRequest, 0)
 	if request.Amount != nil {
-		updateRequests.Append("amount_number", request.Amount.Amount)
-		updateRequests.Append("amount_currency", request.Amount.Currency.String())
+		updateRequests.Append(rdb.ColumnAmountNumber, request.Amount.Amount)
+		updateRequests.Append(rdb.ColumnAmountCurrency, request.Amount.Currency.String())
 	}
 	if request.LastTransactionRecordID != nil {
-		updateRequests.Append("last_transaction_record_id", request.LastTransactionRecordID.String())
+		updateRequests.Append(rdb.ColumnLastTransactionRecordID, request.LastTransactionRecordID.String())
 	}
 	if request.LastTransactionTime != nil {
-		updateRequests.Append("last_transaction_time", request.LastTransactionTime.Unix())
+		updateRequests.Append(rdb.ColumnLastTransactionTime, request.LastTransactionTime.Unix())
 	}
 	return updateRequests
 }

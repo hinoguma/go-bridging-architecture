@@ -60,7 +60,7 @@ func (client postgreSQLClient) QueryRowContext(
 }
 
 func (client postgreSQLClient) GetRowByID(
-	ctx context.Context, tableName string, id string, fields []string, options SQLOperationOptions,
+	ctx context.Context, tableName string, id SQLRecordID, fields []string, options SQLOperationOptions,
 ) (*sql.Row, error) {
 	query, args := BuildSelectQueryWithId(tableName, id, fields)
 	row, err := client.QueryRowContext(ctx, query, args, options)
@@ -87,7 +87,7 @@ func (client postgreSQLClient) CreateRow(
 func (client postgreSQLClient) UpdateRowByStrID(
 	ctx context.Context,
 	tableName string,
-	id string,
+	id SQLRecordID,
 	updateFields UpdateFieldRequests,
 	options SQLOperationOptions,
 ) (*sql.Row, error) {

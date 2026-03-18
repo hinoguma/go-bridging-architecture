@@ -8,8 +8,56 @@ import (
 	"strings"
 )
 
-type SQLDatabaseItemID interface {
-	string | int64
+type SQLRecordID struct {
+	str *string
+	int *int64
+}
+
+func (value SQLRecordID) Value() any {
+	if value.str != nil {
+		return *value.str
+	}
+	if value.int != nil {
+		return *value.int
+	}
+	return nil
+}
+
+func (value SQLRecordID) IsString() bool {
+	return value.str != nil
+}
+
+func (value SQLRecordID) IsInt() bool {
+	return value.int != nil
+}
+
+func (value SQLRecordID) String() string {
+	if value.str != nil {
+		return *value.str
+	}
+	if value.int != nil {
+		return fmt.Sprintf("%d", *value.int)
+	}
+	return ""
+}
+
+func (value SQLRecordID) Int() int64 {
+	if value.int != nil {
+		return *value.int
+	}
+	return 0
+}
+
+func SQLStrID(id string) SQLRecordID {
+	return SQLRecordID{
+		str: &id,
+	}
+}
+
+func SQLIntID(id int64) SQLRecordID {
+	return SQLRecordID{
+		int: &id,
+	}
 }
 
 type SQLDatabaseItem interface {
@@ -72,7 +120,7 @@ type SQLClient interface {
 	GetRowByID(
 		ctx context.Context,
 		tableName string,
-		id string,
+		id SQLRecordID,
 		fields []string,
 		options SQLOperationOptions,
 	) (*sql.Row, error)
@@ -87,7 +135,7 @@ type SQLClient interface {
 	UpdateRowByStrID(
 		ctx context.Context,
 		tableName string,
-		id string,
+		id SQLRecordID,
 		updateFields UpdateFieldRequests,
 		options SQLOperationOptions,
 	) (*sql.Row, error)
@@ -143,8 +191,11 @@ func SQLQueryRowContext(ctx context.Context, queryFunc ExecSQLQueryRowFunc, quer
 	return row, nil
 }
 
-func BuildSelectQueryWithId[T string | int64](tableName string, id T, fields []string) (string, []any) {
-	return BuildSelectQueryWithSingleCondition(tableName, fields, "id", id)
+func BuildSelectQueryWithId(tableName string, id SQLRecordID, fields []string) (string, []any) {
+	if id.IsInt() {
+		return BuildSelectQueryWithSingleCondition(tableName, fields, "id", id.Int())
+	}
+	return BuildSelectQueryWithSingleCondition(tableName, fields, "id", id.String())
 }
 
 func BuildSelectQueryWithSingleCondition[T string | int64](tableName string, fields []string, whereField string, val T) (string, []any) {
@@ -153,16 +204,16 @@ func BuildSelectQueryWithSingleCondition[T string | int64](tableName string, fie
 	return query, values
 }
 
-func BuildUpdateQueryWithId[T string | int64](id T, tableName string, updateFields UpdateFieldRequests) (string, []any) {
+func BuildUpdateQueryWithId(tableName string, id SQLRecordID, updateFields UpdateFieldRequests) (string, []any) {
 	setClause, values := updateFields.ToSQLSetClause()
 	query := "UPDATE " + tableName + " SET " + setClause + " WHERE id = $" + string(len(values)+1)
-	values = append(values, id)
+	values = append(values, id.Value())
 	return query, values
 }
 
-func BuildDeleteQueryWithId[T string | int64](id T, tableName string) (string, []any) {
+func BuildDeleteQueryWithId(tableName string, id SQLRecordID) (string, []any) {
 	query := "DELETE FROM " + tableName + " WHERE id = $1"
-	values := []any{id}
+	values := []any{id.Value()}
 	return query, values
 }
 
