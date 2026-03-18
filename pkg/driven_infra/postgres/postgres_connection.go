@@ -1,4 +1,4 @@
-package rdb
+package postgres
 
 import (
 	"app/config"

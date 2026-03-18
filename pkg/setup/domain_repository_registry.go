@@ -22,11 +22,11 @@ func (registry *DomainRepositoryRegistry) Initialize(ctx context.Context, infraR
 	registry.dbTransactionManager = driven_infra_port.NewDBTransactionManager(
 		registry.drivenInfraRegistry.TransactionManager(),
 	)
-	registry.bankAccountRepository = driven_infra_port.NewBankAccountRepositoryDynamoDB(
-		registry.drivenInfraRegistry.DynamoDBClient(),
+	registry.bankAccountRepository = driven_infra_port.NewBankAccountRepositorySQL(
+		registry.drivenInfraRegistry.SQLClient(),
 	)
-	registry.transactionRecordRepository = driven_infra_port.NewTransactionRecordRepositoryDynamoDB(
-		registry.drivenInfraRegistry.DynamoDBClient(),
+	registry.transactionRecordRepository = driven_infra_port.NewTransactionRecordRepositorySQL(
+		registry.drivenInfraRegistry.SQLClient(),
 	)
 	registry.bankAccountAuthenticator = driven_infra_port.NewBankAccountAuthenticator(
 		registry.drivenInfraRegistry.CognitoClient(),

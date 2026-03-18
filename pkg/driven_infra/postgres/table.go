@@ -1,4 +1,4 @@
-package rdb
+package postgres
 
 const (
 	TableTransactionRecords = "transaction_records"

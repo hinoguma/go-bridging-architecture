@@ -1,4 +1,4 @@
-package rdb
+package postgres
 
 import (
 	"app/pkg/crosscutting/errors"
@@ -65,8 +65,17 @@ type SQLDatabaseItem interface {
 	SetBySQLRow(row *sql.Row) error
 }
 
+type LockMode string
+
+const (
+	LockNone      LockMode = ""
+	LockForUpdate LockMode = "FOR UPDATE"
+	LockForShare  LockMode = "FOR SHARE"
+)
+
 type SQLOperationOptions struct {
 	transactionID *string
+	lockMode      *LockMode
 }
 
 func (options SQLOperationOptions) HasDBTransactionID() bool {
@@ -84,20 +93,19 @@ func (options *SQLOperationOptions) SetTransactionID(id string) {
 	options.transactionID = &id
 }
 
-type SQLOperationOptionalFunc func(options *SQLOperationOptions)
-
-func WithTransactionID(id string) SQLOperationOptionalFunc {
-	return func(options *SQLOperationOptions) {
-		options.transactionID = &id
-	}
+func (options SQLOperationOptions) HasLockMode() bool {
+	return options.lockMode != nil
 }
 
-func ApplySQLOperationOptionalFunc(optionalFuncs ...SQLOperationOptionalFunc) SQLOperationOptions {
-	options := SQLOperationOptions{}
-	for _, optionalFunc := range optionalFuncs {
-		optionalFunc(&options)
+func (options SQLOperationOptions) GetLockMode() LockMode {
+	if options.lockMode == nil {
+		return LockNone
 	}
-	return options
+	return *options.lockMode
+}
+
+func (options *SQLOperationOptions) SetLockMode(lockMode LockMode) {
+	options.lockMode = &lockMode
 }
 
 type SQLClient interface {
@@ -142,27 +150,8 @@ type SQLClient interface {
 }
 
 type ExecSQLQueryFunc func(ctx context.Context, query string, args ...any) (*sql.Rows, error)
-type ExecSQLQueryRowFunc func(ctx context.Context, query string, args ...any) *sql.Row
 
-//
-//func SQLQueryContextWithOpt(ctx context.Context, queryFunc ExecSQLQueryFunc, query string, args []any, optionalFuncs... SQLOperationOptionalFunc) (*sql.Rows, error) {
-//	// log, metrics, tracing, etc.
-//
-//	options := ApplySQLOperationOptionalFunc(optionalFuncs...)
-//
-//	row, err := queryFunc(ctx, query, args...)
-//	// log, metrics, tracing, etc.
-//
-//	if err != nil {
-//		if errors.As(err, &sql.ErrNoRows) {
-//			err = errors.NewDataNotFoundErr()
-//		}
-//		return row, errors.LiftWithCtx(err, ctx)
-//	}
-//
-//	// success
-//	return row, nil
-//}
+type ExecSQLQueryRowFunc func(ctx context.Context, query string, args ...any) *sql.Row
 
 func SQLQueryContext(ctx context.Context, queryFunc ExecSQLQueryFunc, query string, args ...any) (*sql.Rows, error) {
 	// log, metrics, tracing, etc.

@@ -4,18 +4,18 @@ import (
 	"app/pkg/applogic/domain/model"
 	"app/pkg/applogic/domain/repository"
 	"app/pkg/crosscutting/errors"
-	"app/pkg/driven_infra/rdb"
+	"app/pkg/driven_infra/postgres"
 	"context"
 )
 
-func NewDBTransactionManager(transactionManager rdb.TransactionManagerIF) repository.DBTransactionManager {
+func NewDBTransactionManager(transactionManager postgres.TransactionManagerIF) repository.DBTransactionManager {
 	return dbTransactionManager{
 		transactionManager: transactionManager,
 	}
 }
 
 type dbTransactionManager struct {
-	transactionManager rdb.TransactionManagerIF
+	transactionManager postgres.TransactionManagerIF
 }
 
 func (manager dbTransactionManager) Begin(ctx context.Context, req model.DBTransactionBeginRequest) (model.DBTransactionID, error) {

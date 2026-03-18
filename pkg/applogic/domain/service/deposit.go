@@ -46,7 +46,8 @@ func (serv depositService) Do(ctx context.Context, req model.DepositServiceReque
 	// For idempotency
 	if req.HasTransactionRecordID() {
 		existingRecord, err := serv.transactionRecordRepository.Get(
-			ctx, req.GetTransactionRecordID(), model.WithDBTransactionID(txId),
+			ctx, req.GetTransactionRecordID(),
+			model.WithDBTransactionID(txId),
 		)
 		if err != nil {
 			return result, errors.LiftWithCtx(err, ctx)
@@ -62,7 +63,9 @@ func (serv depositService) Do(ctx context.Context, req model.DepositServiceReque
 	}
 
 	bancAccount, err := serv.bankAccountRepository.Get(
-		ctx, req.BankAccountID, model.WithDBTransactionID(txId),
+		ctx, req.BankAccountID,
+		model.WithDBTransactionID(txId),
+		model.WithSelectLock(),
 	)
 	if err != nil {
 		return result, errors.LiftWithCtx(err, ctx)

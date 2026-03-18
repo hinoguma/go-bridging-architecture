@@ -105,6 +105,7 @@ type HasDBTransactionID struct {
 
 type DBOperationOptions struct {
 	TransactionID *DBTransactionID
+	selectLock    *bool
 }
 
 func (options DBOperationOptions) HasDBTransactionID() bool {
@@ -118,11 +119,29 @@ func (options DBOperationOptions) GetTransactionID() DBTransactionID {
 	return *options.TransactionID
 }
 
+func (options *DBOperationOptions) HasSelectLock() bool {
+	return options.selectLock != nil
+}
+
+func (options *DBOperationOptions) GetSelectLock() bool {
+	if options.selectLock == nil {
+		return false
+	}
+	return *options.selectLock
+}
+
 type DBOperationOptionalFunc func(options *DBOperationOptions)
 
 func WithDBTransactionID(txId DBTransactionID) DBOperationOptionalFunc {
 	return func(options *DBOperationOptions) {
 		options.TransactionID = &txId
+	}
+}
+
+func WithSelectLock() DBOperationOptionalFunc {
+	return func(options *DBOperationOptions) {
+		selectLock := true
+		options.selectLock = &selectLock
 	}
 }
 

@@ -6,7 +6,7 @@ import (
 	"app/pkg/crosscutting/errors"
 	"app/pkg/crosscutting/timer"
 	driven_infra_aws "app/pkg/driven_infra/aws"
-	"app/pkg/driven_infra/rdb"
+	"app/pkg/driven_infra/postgres"
 	"context"
 	"database/sql"
 )
@@ -39,7 +39,7 @@ func NewBankAccountRepositoryDynamoDB(
 }
 
 type bankAccountRepositorySQL struct {
-	client rdb.SQLClient
+	client postgres.SQLClient
 }
 
 func (repo bankAccountRepositorySQL) Get(ctx context.Context, id model.BankAccountID, optionaltFuncs ...model.DBOperationOptionalFunc) (model.BankAccount, error) {
@@ -48,12 +48,12 @@ func (repo bankAccountRepositorySQL) Get(ctx context.Context, id model.BankAccou
 
 	sqlOptions := convertOptionalFuncsToSQLOperationOptions(optionaltFuncs)
 
-	sqlItem := bankAccountSQLItem{}
+	sqlItem := bankAccountDTO{}
 
 	row, err = repo.client.GetRowByID(
 		ctx,
-		rdb.TableBankAccounts,
-		rdb.SQLStrID(id.String()),
+		postgres.TableBankAccounts,
+		postgres.SQLStrID(id.String()),
 		sqlItem.Columns(),
 		sqlOptions,
 	)
@@ -76,10 +76,10 @@ func (repo bankAccountRepositorySQL) Create(
 
 	sqlOptions := convertOptionalFuncsToSQLOperationOptions(optionaltFuncs)
 
-	sqlItem := bankAccountSQLItem{}
+	sqlItem := bankAccountDTO{}
 	sqlItem.SetByModel(item)
 
-	sqlRow, err := repo.client.CreateRow(ctx, rdb.TableBankAccounts, &sqlItem, sqlOptions)
+	sqlRow, err := repo.client.CreateRow(ctx, postgres.TableBankAccounts, &sqlItem, sqlOptions)
 	if err != nil {
 		return item, errors.Lift(err)
 	}
@@ -96,8 +96,8 @@ func (repo bankAccountRepositorySQL) Update(ctx context.Context, request model.U
 	updateRequests := convertUpdateBankAccountRequestToUpdateRequests(request)
 	_, err := repo.client.UpdateRowByStrID(
 		ctx,
-		rdb.TableBankAccounts,
-		rdb.SQLStrID(request.ID.String()),
+		postgres.TableBankAccounts,
+		postgres.SQLStrID(request.ID.String()),
 		updateRequests,
 		sqlOptions,
 	)
@@ -107,25 +107,25 @@ func (repo bankAccountRepositorySQL) Update(ctx context.Context, request model.U
 	return nil
 }
 
-func NewBankAccountRepositorySQL(client rdb.SQLClient) repository.BankAccountRepository {
+func NewBankAccountRepositorySQL(client postgres.SQLClient) repository.BankAccountRepository {
 	return bankAccountRepositorySQL{
 		client: client,
 	}
 }
 
-type bankAccountSQLItem struct {
-	id                      string `db:"id"`
-	bankUserId              string `db:"bank_user_id"`
-	accountType             string `db:"type"`
-	amountNumber            int64  `db:"amount_number"`
-	amountCurrency          string `db:"amount_currency"`
-	lastTransactionRecordId string `db:"last_transaction_record_id"`
-	lastTransactionTime     int64  `db:"last_transaction_time"`
-	createdAt               int64  `db:"created_at"`
-	updatedAt               int64  `db:"updated_at"`
+type bankAccountDTO struct {
+	id                      string
+	bankUserId              string
+	accountType             string
+	amountNumber            int64
+	amountCurrency          string
+	lastTransactionRecordId string
+	lastTransactionTime     int64
+	createdAt               int64
+	updatedAt               int64
 }
 
-func (item *bankAccountSQLItem) SetByModel(model model.BankAccount) {
+func (item *bankAccountDTO) SetByModel(model model.BankAccount) {
 	item.id = model.ID.String()
 	item.bankUserId = model.BankUserID.String()
 	item.accountType = model.Type.String()
@@ -137,7 +137,7 @@ func (item *bankAccountSQLItem) SetByModel(model model.BankAccount) {
 	item.updatedAt = model.UpdatedAt.Unix()
 }
 
-func (item *bankAccountSQLItem) SetBySQLRow(row *sql.Row) error {
+func (item *bankAccountDTO) SetBySQLRow(row *sql.Row) error {
 	return row.Scan(
 		&item.id,
 		&item.bankUserId,
@@ -151,7 +151,7 @@ func (item *bankAccountSQLItem) SetBySQLRow(row *sql.Row) error {
 	)
 }
 
-func (item bankAccountSQLItem) ToModel() model.BankAccount {
+func (item bankAccountDTO) ToModel() model.BankAccount {
 	modelItem := model.BankAccount{
 		ID: model.BankAccountID(item.id),
 		HasBankUserID: model.HasBankUserID{
@@ -170,35 +170,35 @@ func (item bankAccountSQLItem) ToModel() model.BankAccount {
 	return modelItem
 }
 
-func (item bankAccountSQLItem) ToMap() map[string]any {
+func (item bankAccountDTO) ToMap() map[string]any {
 	return map[string]any{
-		rdb.ColumnID:                      item.id,
-		rdb.ColumnBankUserID:              item.bankUserId,
-		rdb.ColumnType:                    item.accountType,
-		rdb.ColumnAmountNumber:            item.amountNumber,
-		rdb.ColumnAmountCurrency:          item.amountCurrency,
-		rdb.ColumnLastTransactionRecordID: item.lastTransactionRecordId,
-		rdb.ColumnLastTransactionTime:     item.lastTransactionTime,
-		rdb.ColumnCreatedAt:               item.createdAt,
-		rdb.ColumnUpdatedAt:               item.updatedAt,
+		postgres.ColumnID:                      item.id,
+		postgres.ColumnBankUserID:              item.bankUserId,
+		postgres.ColumnType:                    item.accountType,
+		postgres.ColumnAmountNumber:            item.amountNumber,
+		postgres.ColumnAmountCurrency:          item.amountCurrency,
+		postgres.ColumnLastTransactionRecordID: item.lastTransactionRecordId,
+		postgres.ColumnLastTransactionTime:     item.lastTransactionTime,
+		postgres.ColumnCreatedAt:               item.createdAt,
+		postgres.ColumnUpdatedAt:               item.updatedAt,
 	}
 }
 
-func (item bankAccountSQLItem) Columns() []string {
+func (item bankAccountDTO) Columns() []string {
 	return []string{
-		rdb.ColumnID,
-		rdb.ColumnBankUserID,
-		rdb.ColumnType,
-		rdb.ColumnAmountNumber,
-		rdb.ColumnAmountCurrency,
-		rdb.ColumnLastTransactionRecordID,
-		rdb.ColumnLastTransactionTime,
-		rdb.ColumnCreatedAt,
-		rdb.ColumnUpdatedAt,
+		postgres.ColumnID,
+		postgres.ColumnBankUserID,
+		postgres.ColumnType,
+		postgres.ColumnAmountNumber,
+		postgres.ColumnAmountCurrency,
+		postgres.ColumnLastTransactionRecordID,
+		postgres.ColumnLastTransactionTime,
+		postgres.ColumnCreatedAt,
+		postgres.ColumnUpdatedAt,
 	}
 }
 
-func (item bankAccountSQLItem) Values() []any {
+func (item bankAccountDTO) Values() []any {
 	return []any{
 		item.id,
 		item.bankUserId,
@@ -212,17 +212,17 @@ func (item bankAccountSQLItem) Values() []any {
 	}
 }
 
-func convertUpdateBankAccountRequestToUpdateRequests(request model.UpdateBankAccountRequest) rdb.UpdateFieldRequests {
-	var updateRequests rdb.UpdateFieldRequests = make([]rdb.UpdateFieldRequest, 0)
+func convertUpdateBankAccountRequestToUpdateRequests(request model.UpdateBankAccountRequest) postgres.UpdateFieldRequests {
+	var updateRequests postgres.UpdateFieldRequests = make([]postgres.UpdateFieldRequest, 0)
 	if request.Amount != nil {
-		updateRequests.Append(rdb.ColumnAmountNumber, request.Amount.Amount)
-		updateRequests.Append(rdb.ColumnAmountCurrency, request.Amount.Currency.String())
+		updateRequests.Append(postgres.ColumnAmountNumber, request.Amount.Amount)
+		updateRequests.Append(postgres.ColumnAmountCurrency, request.Amount.Currency.String())
 	}
 	if request.LastTransactionRecordID != nil {
-		updateRequests.Append(rdb.ColumnLastTransactionRecordID, request.LastTransactionRecordID.String())
+		updateRequests.Append(postgres.ColumnLastTransactionRecordID, request.LastTransactionRecordID.String())
 	}
 	if request.LastTransactionTime != nil {
-		updateRequests.Append(rdb.ColumnLastTransactionTime, request.LastTransactionTime.Unix())
+		updateRequests.Append(postgres.ColumnLastTransactionTime, request.LastTransactionTime.Unix())
 	}
 	return updateRequests
 }

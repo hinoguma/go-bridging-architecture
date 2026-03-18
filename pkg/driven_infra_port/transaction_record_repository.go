@@ -6,7 +6,7 @@ import (
 	"app/pkg/crosscutting/errors"
 	"app/pkg/crosscutting/timer"
 	"app/pkg/driven_infra/aws"
-	"app/pkg/driven_infra/rdb"
+	"app/pkg/driven_infra/postgres"
 	"context"
 	"database/sql"
 )
@@ -34,10 +34,10 @@ func NewTransactionRecordRepositoryDynamoDB(
 }
 
 type transactionRecordRepositorySQL struct {
-	client rdb.SQLClient
+	client postgres.SQLClient
 }
 
-func NewTransactionRecordRepositorySQL(client rdb.SQLClient) repository.TransactionRecordRepository {
+func NewTransactionRecordRepositorySQL(client postgres.SQLClient) repository.TransactionRecordRepository {
 	return transactionRecordRepositorySQL{
 		client: client,
 	}
@@ -49,9 +49,15 @@ func (repo transactionRecordRepositorySQL) Get(ctx context.Context, id model.Tra
 
 	sqlOptions := convertOptionalFuncsToSQLOperationOptions(optionaltFuncs)
 
-	sqlItem := transactionRecordSQLItem{}
+	sqlItem := transactionRecordDTO{}
 
-	row, err = repo.client.GetRowByID(ctx, rdb.TableTransactionRecords, id.String(), sqlItem.Columns(), sqlOptions)
+	row, err = repo.client.GetRowByID(
+		ctx,
+		postgres.TableTransactionRecords,
+		postgres.SQLStrID(id.String()),
+		sqlItem.Columns(),
+		sqlOptions,
+	)
 	if err != nil {
 		return model.TransactionRecord{}, errors.Lift(err)
 	}
@@ -71,10 +77,10 @@ func (repo transactionRecordRepositorySQL) Create(
 
 	sqlOptions := convertOptionalFuncsToSQLOperationOptions(optionaltFuncs)
 
-	sqlItem := transactionRecordSQLItem{}
+	sqlItem := transactionRecordDTO{}
 	sqlItem.SetByModel(item)
 
-	sqlRow, err := repo.client.CreateRow(ctx, rdb.TableTransactionRecords, &sqlItem, sqlOptions)
+	sqlRow, err := repo.client.CreateRow(ctx, postgres.TableTransactionRecords, &sqlItem, sqlOptions)
 	if err != nil {
 		return item, errors.Lift(err)
 	}
@@ -85,22 +91,22 @@ func (repo transactionRecordRepositorySQL) Create(
 	return sqlItem.ToModel(), nil
 }
 
-type transactionRecordSQLItem struct {
-	id                     string `db:"id"`
-	bankAccountId          string `db:"bank_account_id"`
-	bankUserId             string `db:"bank_user_id"`
-	recordType             string `db:"type"`
-	depositAmountNumber    int64  `db:"deposit_amount_number"`
-	depositAmountCurrency  string `db:"deposit_amount_currency"`
-	withdrawAmountNumber   int64  `db:"withdraw_amount_number"`
-	withdrawAmountCurrency string `db:"withdraw_amount_currency"`
-	afterAmountNumber      int64  `db:"after_amount_number"`
-	afterAmountCurrency    string `db:"after_amount_currency"`
-	createdAt              int64  `db:"created_at"`
-	updatedAt              int64  `db:"updated_at"`
+type transactionRecordDTO struct {
+	id                     string
+	bankAccountId          string
+	bankUserId             string
+	recordType             string
+	depositAmountNumber    int64
+	depositAmountCurrency  string
+	withdrawAmountNumber   int64
+	withdrawAmountCurrency string
+	afterAmountNumber      int64
+	afterAmountCurrency    string
+	createdAt              int64
+	updatedAt              int64
 }
 
-func (item *transactionRecordSQLItem) SetByModel(model model.TransactionRecord) {
+func (item *transactionRecordDTO) SetByModel(model model.TransactionRecord) {
 	item.id = model.ID.String()
 	item.bankAccountId = model.BankAccountID.String()
 	item.bankUserId = model.BankUserID.String()
@@ -115,7 +121,7 @@ func (item *transactionRecordSQLItem) SetByModel(model model.TransactionRecord) 
 	item.updatedAt = model.UpdatedAt.Unix()
 }
 
-func (item *transactionRecordSQLItem) SetBySQLRow(row *sql.Row) error {
+func (item *transactionRecordDTO) SetBySQLRow(row *sql.Row) error {
 	return row.Scan(
 		&item.id,
 		&item.bankAccountId,
@@ -132,7 +138,7 @@ func (item *transactionRecordSQLItem) SetBySQLRow(row *sql.Row) error {
 	)
 }
 
-func (item transactionRecordSQLItem) ToModel() model.TransactionRecord {
+func (item transactionRecordDTO) ToModel() model.TransactionRecord {
 	modelItem := model.TransactionRecord{
 		ID: model.TransactionRecordID(item.id),
 		HasBankAccountID: model.HasBankAccountID{
@@ -160,41 +166,41 @@ func (item transactionRecordSQLItem) ToModel() model.TransactionRecord {
 	return modelItem
 }
 
-func (item transactionRecordSQLItem) ToMap() map[string]any {
+func (item transactionRecordDTO) ToMap() map[string]any {
 	return map[string]any{
-		"id":                       item.id,
-		"bank_account_id":          item.bankAccountId,
-		"bank_user_id":             item.bankUserId,
-		"type":                     item.recordType,
-		"deposit_amount_number":    item.depositAmountNumber,
-		"deposit_amount_currency":  item.depositAmountCurrency,
-		"withdraw_amount_number":   item.withdrawAmountNumber,
-		"withdraw_amount_currency": item.withdrawAmountCurrency,
-		"after_amount_number":      item.afterAmountNumber,
-		"after_amount_currency":    item.afterAmountCurrency,
-		"created_at":               item.createdAt,
-		"updated_at":               item.updatedAt,
+		postgres.ColumnID:                     item.id,
+		postgres.ColumnBankAccountID:          item.bankAccountId,
+		postgres.ColumnBankUserID:             item.bankUserId,
+		postgres.ColumnType:                   item.recordType,
+		postgres.ColumnDepositAmountNumber:    item.depositAmountNumber,
+		postgres.ColumnDepositAmountCurrency:  item.depositAmountCurrency,
+		postgres.ColumnWithdrawAmountNumber:   item.withdrawAmountNumber,
+		postgres.ColumnWithdrawAmountCurrency: item.withdrawAmountCurrency,
+		postgres.ColumnAfterAmountNumber:      item.afterAmountNumber,
+		postgres.ColumnAfterAmountCurrency:    item.afterAmountCurrency,
+		postgres.ColumnCreatedAt:              item.createdAt,
+		postgres.ColumnUpdatedAt:              item.updatedAt,
 	}
 }
 
-func (item transactionRecordSQLItem) Columns() []string {
+func (item transactionRecordDTO) Columns() []string {
 	return []string{
-		"id",
-		"bank_account_id",
-		"bank_user_id",
-		"type",
-		"deposit_amount_number",
-		"deposit_amount_currency",
-		"withdraw_amount_number",
-		"withdraw_amount_currency",
-		"after_amount_number",
-		"after_amount_currency",
-		"created_at",
-		"updated_at",
+		postgres.ColumnID,
+		postgres.ColumnBankAccountID,
+		postgres.ColumnBankUserID,
+		postgres.ColumnType,
+		postgres.ColumnDepositAmountNumber,
+		postgres.ColumnDepositAmountCurrency,
+		postgres.ColumnWithdrawAmountNumber,
+		postgres.ColumnWithdrawAmountCurrency,
+		postgres.ColumnAfterAmountNumber,
+		postgres.ColumnAfterAmountCurrency,
+		postgres.ColumnCreatedAt,
+		postgres.ColumnUpdatedAt,
 	}
 }
 
-func (item transactionRecordSQLItem) Values() []any {
+func (item transactionRecordDTO) Values() []any {
 	return []any{
 		item.id,
 		item.bankAccountId,

@@ -6,7 +6,7 @@ import (
 	"app/pkg/crosscutting/infra"
 	"app/pkg/crosscutting/log"
 	"app/pkg/crosscutting/timer"
-	"app/pkg/driven_infra/rdb"
+	"app/pkg/driven_infra/postgres"
 	"app/pkg/driver_interface/lambdaapigw"
 	"app/pkg/setup"
 	"context"
@@ -49,7 +49,7 @@ func coldStart() error {
 	errors.SetContextRequestIDKey(lambdaapigw.RequestIDKey)
 
 	// set up user call -> app infra
-	db, err := rdb.NewPostgresDBFromEnv()
+	db, err := postgres.NewPostgresDBFromEnv()
 	if err != nil {
 		return errors.LiftWithCtx(err, ctx)
 	}

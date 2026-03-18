@@ -3,7 +3,7 @@ package setup
 import (
 	"app/pkg/crosscutting/errors"
 	"app/pkg/driven_infra/aws"
-	"app/pkg/driven_infra/rdb"
+	"app/pkg/driven_infra/postgres"
 	"context"
 	"database/sql"
 	"sync"
@@ -13,8 +13,8 @@ type DrivenInfraRegistry struct {
 	sync.Mutex
 	dynamoDBClient     driven_infra_aws.DynamoDBClient
 	cognitoClient      driven_infra_aws.CognitoClient
-	sqlClient          rdb.SQLClient
-	transactionManager rdb.TransactionManagerIF
+	sqlClient          postgres.SQLClient
+	transactionManager postgres.TransactionManagerIF
 }
 
 func (registry *DrivenInfraRegistry) Initialize(
@@ -33,8 +33,8 @@ func (registry *DrivenInfraRegistry) Initialize(
 		registry.Unlock()
 		return errors.Lift(err)
 	}
-	registry.sqlClient = rdb.NewPostgreSQLClient(db)
-	registry.transactionManager = rdb.NewTransactionManager(registry.sqlClient.GetDB())
+	registry.sqlClient = postgres.NewPostgreSQLClient(db)
+	registry.transactionManager = postgres.NewTransactionManager(registry.sqlClient.GetDB())
 	registry.Unlock()
 	return nil
 }
@@ -47,11 +47,11 @@ func (registry *DrivenInfraRegistry) CognitoClient() driven_infra_aws.CognitoCli
 	return registry.cognitoClient
 }
 
-func (registry *DrivenInfraRegistry) SQLClient() rdb.SQLClient {
+func (registry *DrivenInfraRegistry) SQLClient() postgres.SQLClient {
 	return registry.sqlClient
 }
 
-func (registry *DrivenInfraRegistry) TransactionManager() rdb.TransactionManagerIF {
+func (registry *DrivenInfraRegistry) TransactionManager() postgres.TransactionManagerIF {
 	return registry.transactionManager
 }
 

@@ -62,7 +62,9 @@ func (serv withdrawService) Do(ctx context.Context, req model.WithdrawServiceReq
 	}
 
 	bancAccount, err := serv.bankAccountRepository.Get(
-		ctx, req.BankAccountID, model.WithDBTransactionID(txId),
+		ctx, req.BankAccountID,
+		model.WithDBTransactionID(txId),
+		model.WithSelectLock(),
 	)
 	if err != nil {
 		return result, errors.LiftWithCtx(err, ctx)
