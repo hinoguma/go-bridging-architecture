@@ -48,13 +48,12 @@ func (service bankAccountAuthenticateService) Authenticate(
 		return result
 	}
 
-	// get user
-	user, err := service.BankAccountRepository.GetByEmail(ctx, verifyRes.Email)
+	// get bankAccount
+	bankAccount, err := service.BankAccountRepository.Get(ctx, verifyRes.BankAccountID)
 	if err != nil {
 		result.Err = errors.Lift(err)
 		return result
 	}
-	// todo
-	result.BankAccount = user
+	result.BankAccount = bankAccount
 	return result
 }

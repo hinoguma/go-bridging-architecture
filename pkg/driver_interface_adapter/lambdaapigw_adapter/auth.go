@@ -49,6 +49,10 @@ func (mw authenticateBeforeMiddleware) Do(
 		return result, nil
 	}
 
+	result.Request.SetAuthenticatedBankAccountID(
+		mwRes.BankAccount.ID.String(),
+	)
+
 	return result, nil
 }
 
