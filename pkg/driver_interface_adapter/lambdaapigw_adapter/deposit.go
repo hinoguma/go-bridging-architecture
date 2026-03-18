@@ -138,6 +138,17 @@ func ValidateDepositRequestBody(body DepositRequestBody) []crosscutting.Validate
 			Field: "currency",
 		})
 	}
+
+	if body.TransactionRecordID == nil {
+		// transactionRecordId is optional
+
+	} else if *body.TransactionRecordID == "" {
+		details = append(details, crosscutting.ValidateDetail{
+			Type:  crosscutting.InValidTypeMinStrLen,
+			Field: "transactionRecordId",
+			Min:   crosscutting.Ptr(1),
+		})
+	}
 	return details
 }
 
