@@ -69,6 +69,9 @@ func (model *UpdateBankAccountRequest) SetLastTransactionTime(t time.Time) *Upda
 }
 
 func (model UpdateBankAccountRequest) UpdateItem(item BankAccount) BankAccount {
+	if item.ID != model.ID {
+		return item
+	}
 	if model.Amount != nil {
 		item.Amount = *model.Amount
 	}

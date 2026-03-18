@@ -27,6 +27,7 @@ const (
 	JPY Currency = "JPY"
 )
 
+// todo: should we use int64 for amount? or float64?
 type Money struct {
 	Amount   int64
 	Currency Currency

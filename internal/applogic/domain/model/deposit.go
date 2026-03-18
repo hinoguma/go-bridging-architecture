@@ -45,9 +45,7 @@ func NewDepositResult(
 	}
 }
 
-func Deposit(account BankAccount, amount Money, t time.Time) DepositResult {
-
-	recordId := IssueTransactionRecordID()
+func Deposit(recordId TransactionRecordID, account BankAccount, amount Money, t time.Time) DepositResult {
 
 	updateReq := NewUpdateBankAccountRequest(account.ID)
 	updateReq.SetAmount(account.Amount).
@@ -55,7 +53,7 @@ func Deposit(account BankAccount, amount Money, t time.Time) DepositResult {
 		SetLastTransactionTime(t)
 
 	account = updateReq.UpdateItem(account)
-	record := NewTransactionRecordDeposit(account, amount, t)
+	record := NewTransactionRecordDeposit(recordId, account, amount, t)
 
 	return NewDepositResult(account, updateReq, record)
 }

@@ -44,21 +44,26 @@ func (serv withdrawService) Do(ctx context.Context, req model.WithdrawServiceReq
 	result.TxID = txId
 
 	// For idempotency
+	transactionRecordID := model.IssueTransactionRecordID()
 	if req.HasTransactionRecordID() {
+		transactionRecordID = req.GetTransactionRecordID()
 		existingRecord, err := serv.transactionRecordRepository.Get(
-			ctx, req.GetTransactionRecordID(), model.WithDBTransactionID(txId),
+			ctx, transactionRecordID, model.WithDBTransactionID(txId),
 		)
-		if err != nil {
+		isNotFound := errors.IsDataNotFoundError(err)
+		if err != nil && !isNotFound {
 			return result, errors.LiftWithCtx(err, ctx)
 		}
-		if existingRecord.BankAccountID != req.BankAccountID {
-			return result, errors.NewWithCtx("transaction record does not match with bank account", ctx)
+		if !isNotFound {
+			if existingRecord.BankAccountID != req.BankAccountID {
+				return result, errors.NewWithCtx("transaction record does not match with bank account", ctx)
+			}
+			if existingRecord.Type != model.TransactionTypeWithdrawal {
+				return result, errors.NewWithCtx("transaction record type is not identical", ctx)
+			}
+			result.Record = existingRecord
+			return result, nil
 		}
-		if existingRecord.Type != model.TransactionTypeWithdrawal {
-			return result, errors.NewWithCtx("transaction record type is not identical", ctx)
-		}
-		result.Record = existingRecord
-		return result, nil
 	}
 
 	bancAccount, err := serv.bankAccountRepository.Get(
@@ -71,7 +76,7 @@ func (serv withdrawService) Do(ctx context.Context, req model.WithdrawServiceReq
 	}
 
 	withdrawRes := model.Withdraw(
-		bancAccount, req.Amount, req.GetRequestAt(),
+		transactionRecordID, bancAccount, req.Amount, req.GetRequestAt(),
 	)
 	if withdrawRes.NotEnoughBalance {
 		result.NotEnoughBalance = true

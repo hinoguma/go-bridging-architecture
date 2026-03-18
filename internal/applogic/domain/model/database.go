@@ -134,12 +134,18 @@ type DBOperationOptionalFunc func(options *DBOperationOptions)
 
 func WithDBTransactionID(txId DBTransactionID) DBOperationOptionalFunc {
 	return func(options *DBOperationOptions) {
+		if options == nil {
+			return
+		}
 		options.TransactionID = &txId
 	}
 }
 
 func WithSelectLock() DBOperationOptionalFunc {
 	return func(options *DBOperationOptions) {
+		if options == nil {
+			return
+		}
 		selectLock := true
 		options.selectLock = &selectLock
 	}

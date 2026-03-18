@@ -38,10 +38,10 @@ type TransactionRecord struct {
 }
 
 func NewTransactionRecordDeposit(
-	accountAfter BankAccount, amount Money, t time.Time,
+	id TransactionRecordID, accountAfter BankAccount, amount Money, t time.Time,
 ) TransactionRecord {
 	record := TransactionRecord{
-		ID:               IssueTransactionRecordID(),
+		ID:               id,
 		HasBankUserID:    HasBankUserID{BankUserID: accountAfter.BankUserID},
 		HasBankAccountID: HasBankAccountID{BankAccountID: accountAfter.ID},
 		Type:             TransactionTypeDeposit,
@@ -53,10 +53,10 @@ func NewTransactionRecordDeposit(
 }
 
 func NewTransactionRecordWithdraw(
-	accountAfter BankAccount, amount Money, t time.Time,
+	id TransactionRecordID, accountAfter BankAccount, amount Money, t time.Time,
 ) TransactionRecord {
 	record := TransactionRecord{
-		ID:               IssueTransactionRecordID(),
+		ID:               id,
 		HasBankUserID:    HasBankUserID{BankUserID: accountAfter.BankUserID},
 		HasBankAccountID: HasBankAccountID{BankAccountID: accountAfter.ID},
 		Type:             TransactionTypeWithdrawal,

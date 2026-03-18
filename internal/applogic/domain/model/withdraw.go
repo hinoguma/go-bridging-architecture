@@ -54,13 +54,11 @@ func NewWithdrawResult(
 	}
 }
 
-func Withdraw(account BankAccount, amount Money, t time.Time) WithdrawResult {
+func Withdraw(recordId TransactionRecordID, account BankAccount, amount Money, t time.Time) WithdrawResult {
 
 	if !account.Amount.GreaterThan(amount) {
 		return NewWithdrawResultNotEnoughBalance()
 	}
-
-	recordId := IssueTransactionRecordID()
 
 	updateReq := NewUpdateBankAccountRequest(account.ID)
 	updateReq.SetAmount(account.Amount).
@@ -68,7 +66,7 @@ func Withdraw(account BankAccount, amount Money, t time.Time) WithdrawResult {
 		SetLastTransactionTime(t)
 
 	account = updateReq.UpdateItem(account)
-	record := NewTransactionRecordWithdraw(account, amount, t)
+	record := NewTransactionRecordWithdraw(recordId, account, amount, t)
 
 	return NewWithdrawResult(account, updateReq, record)
 }
