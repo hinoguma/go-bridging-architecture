@@ -1,7 +1,7 @@
 package lambdaapigw
 
 import (
-	"app/pkg/crosscutting"
+	"app/internal/crosscutting"
 	"encoding/json"
 	"fmt"
 

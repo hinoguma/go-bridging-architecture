@@ -1,7 +1,7 @@
 package lambdaapigw
 
 import (
-	"app/pkg/crosscutting/errors"
+	"app/internal/crosscutting/errors"
 	"context"
 )
 
