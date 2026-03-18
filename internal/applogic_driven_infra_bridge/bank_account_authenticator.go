@@ -1,4 +1,4 @@
-package driven_infra_port
+package applogic_driven_infra_bridge
 
 import (
 	"app/internal/applogic/domain/model"

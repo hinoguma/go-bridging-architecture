@@ -2,7 +2,7 @@ package setup
 
 import (
 	"app/internal/applogic/domain/repository"
-	"app/internal/driven_infra_port"
+	"app/internal/applogic_driven_infra_bridge"
 	"context"
 	"sync"
 )
@@ -19,16 +19,16 @@ type DomainRepositoryRegistry struct {
 func (registry *DomainRepositoryRegistry) Initialize(ctx context.Context, infraRegistry *DrivenInfraRegistry) {
 	registry.Lock()
 	registry.drivenInfraRegistry = infraRegistry
-	registry.dbTransactionManager = driven_infra_port.NewDBTransactionManager(
+	registry.dbTransactionManager = applogic_driven_infra_bridge.NewDBTransactionManager(
 		registry.drivenInfraRegistry.TransactionManager(),
 	)
-	registry.bankAccountRepository = driven_infra_port.NewBankAccountRepositorySQL(
+	registry.bankAccountRepository = applogic_driven_infra_bridge.NewBankAccountRepositorySQL(
 		registry.drivenInfraRegistry.SQLClient(),
 	)
-	registry.transactionRecordRepository = driven_infra_port.NewTransactionRecordRepositorySQL(
+	registry.transactionRecordRepository = applogic_driven_infra_bridge.NewTransactionRecordRepositorySQL(
 		registry.drivenInfraRegistry.SQLClient(),
 	)
-	registry.bankAccountAuthenticator = driven_infra_port.NewBankAccountAuthenticator(
+	registry.bankAccountAuthenticator = applogic_driven_infra_bridge.NewBankAccountAuthenticator(
 		registry.drivenInfraRegistry.CognitoClient(),
 	)
 	registry.Unlock()
@@ -37,7 +37,7 @@ func (registry *DomainRepositoryRegistry) Initialize(ctx context.Context, infraR
 func (registry *DomainRepositoryRegistry) DBTransactionManager() repository.DBTransactionManager {
 	if registry.dbTransactionManager == nil {
 		registry.Lock()
-		registry.dbTransactionManager = driven_infra_port.NewDBTransactionManager(
+		registry.dbTransactionManager = applogic_driven_infra_bridge.NewDBTransactionManager(
 			registry.drivenInfraRegistry.TransactionManager(),
 		)
 		registry.Unlock()
@@ -48,7 +48,7 @@ func (registry *DomainRepositoryRegistry) DBTransactionManager() repository.DBTr
 func (registry *DomainRepositoryRegistry) BankAccountRepository() repository.BankAccountRepository {
 	if registry.bankAccountRepository == nil {
 		registry.Lock()
-		registry.bankAccountRepository = driven_infra_port.NewBankAccountRepositoryDynamoDB(
+		registry.bankAccountRepository = applogic_driven_infra_bridge.NewBankAccountRepositoryDynamoDB(
 			registry.drivenInfraRegistry.DynamoDBClient(),
 		)
 		registry.Unlock()
@@ -59,7 +59,7 @@ func (registry *DomainRepositoryRegistry) BankAccountRepository() repository.Ban
 func (registry *DomainRepositoryRegistry) TransactionRecordRepository() repository.TransactionRecordRepository {
 	if registry.transactionRecordRepository == nil {
 		registry.Lock()
-		registry.transactionRecordRepository = driven_infra_port.NewTransactionRecordRepositoryDynamoDB(
+		registry.transactionRecordRepository = applogic_driven_infra_bridge.NewTransactionRecordRepositoryDynamoDB(
 			registry.drivenInfraRegistry.DynamoDBClient(),
 		)
 		registry.Unlock()
@@ -70,7 +70,7 @@ func (registry *DomainRepositoryRegistry) TransactionRecordRepository() reposito
 func (registry *DomainRepositoryRegistry) BankAccountAuthenticator() repository.BankAccountAuthenticator {
 	if registry.bankAccountAuthenticator == nil {
 		registry.Lock()
-		registry.bankAccountAuthenticator = driven_infra_port.NewBankAccountAuthenticator(
+		registry.bankAccountAuthenticator = applogic_driven_infra_bridge.NewBankAccountAuthenticator(
 			registry.drivenInfraRegistry.CognitoClient(),
 		)
 		registry.Unlock()
