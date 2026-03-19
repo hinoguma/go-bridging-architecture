@@ -5,8 +5,8 @@ import (
 	"app/internal/applogic/domain/repository"
 	"app/internal/crosscutting/errors"
 	"app/internal/crosscutting/timer"
-	"app/internal/driven_infra/aws"
-	"app/internal/driven_infra/postgres"
+	"app/internal/appinfra/aws"
+	"app/internal/appinfra/postgres"
 	"context"
 	"database/sql"
 )

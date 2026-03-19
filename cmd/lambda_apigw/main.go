@@ -1,13 +1,13 @@
 package main
 
 import (
+	"app/internal/appinfra/postgres"
 	"app/internal/callapp/lambdaapigw"
 	"app/internal/crosscutting"
 	"app/internal/crosscutting/errors"
 	"app/internal/crosscutting/infra"
 	"app/internal/crosscutting/log"
 	"app/internal/crosscutting/timer"
-	"app/internal/driven_infra/postgres"
 	"app/internal/setup"
 	"context"
 
