@@ -1,12 +1,12 @@
-package applogic_driven_infra_bridge
+package applogic_appinfra_bridge
 
 import (
+	"app/internal/appinfra/aws"
+	"app/internal/appinfra/postgres"
 	"app/internal/applogic/domain/model"
 	"app/internal/applogic/domain/repository"
 	"app/internal/crosscutting/errors"
 	"app/internal/crosscutting/timer"
-	"app/internal/appinfra/aws"
-	"app/internal/appinfra/postgres"
 	"context"
 	"database/sql"
 )

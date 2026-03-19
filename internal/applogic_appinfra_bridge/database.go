@@ -1,8 +1,8 @@
-package applogic_driven_infra_bridge
+package applogic_appinfra_bridge
 
 import (
-	"app/internal/applogic/domain/model"
 	"app/internal/appinfra/postgres"
+	"app/internal/applogic/domain/model"
 )
 
 func convertModelToSQLOperationOptions(

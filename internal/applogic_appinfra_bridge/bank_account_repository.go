@@ -1,4 +1,4 @@
-package applogic_driven_infra_bridge
+package applogic_appinfra_bridge
 
 import (
 	driven_infra_aws "app/internal/appinfra/aws"
