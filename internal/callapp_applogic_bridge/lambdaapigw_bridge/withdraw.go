@@ -5,7 +5,7 @@ import (
 	"app/internal/applogic/usecase"
 	"app/internal/crosscutting"
 	"app/internal/crosscutting/errors"
-	"app/internal/driver_entrance/lambdaapigw"
+	"app/internal/callapp/lambdaapigw"
 	"context"
 	"encoding/json"
 )

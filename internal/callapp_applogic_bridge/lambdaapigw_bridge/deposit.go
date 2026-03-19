@@ -3,9 +3,9 @@ package lambdaapigw_bridge
 import (
 	"app/internal/applogic/domain/model"
 	"app/internal/applogic/usecase"
+	"app/internal/callapp/lambdaapigw"
 	"app/internal/crosscutting"
 	"app/internal/crosscutting/errors"
-	"app/internal/driver_entrance/lambdaapigw"
 	"context"
 	"encoding/json"
 )

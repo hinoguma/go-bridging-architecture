@@ -1,8 +1,8 @@
 package setup
 
 import (
-	"app/internal/driver_entrance/lambdaapigw"
-	"app/internal/driver_entrance_applogic_bridge/lambdaapigw_bridge"
+	"app/internal/callapp/lambdaapigw"
+	"app/internal/callapp_applogic_bridge/lambdaapigw_bridge"
 	"context"
 	"sync"
 )
