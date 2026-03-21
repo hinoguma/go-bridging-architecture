@@ -22,10 +22,10 @@ func (registry *DomainRepositoryRegistry) Initialize(ctx context.Context, infraR
 	registry.dbTransactionManager = applogic_appinfra_connector.NewDBTransactionManager(
 		registry.drivenInfraRegistry.TransactionManager(),
 	)
-	registry.bankAccountRepository = applogic_appinfra_connector.NewBankAccountRepositorySQL(
+	registry.bankAccountRepository = applogic_appinfra_connector.NewBankAccountRepositoryPostgresConnector(
 		registry.drivenInfraRegistry.SQLClient(),
 	)
-	registry.transactionRecordRepository = applogic_appinfra_connector.NewTransactionRecordRepositorySQL(
+	registry.transactionRecordRepository = applogic_appinfra_connector.NewTransactionRecordRepositoryPostgresConnector(
 		registry.drivenInfraRegistry.SQLClient(),
 	)
 	registry.bankAccountAuthenticator = applogic_appinfra_connector.NewBankAccountAuthenticator(
@@ -48,7 +48,7 @@ func (registry *DomainRepositoryRegistry) DBTransactionManager() repository.DBTr
 func (registry *DomainRepositoryRegistry) BankAccountRepository() repository.BankAccountRepository {
 	if registry.bankAccountRepository == nil {
 		registry.Lock()
-		registry.bankAccountRepository = applogic_appinfra_connector.NewBankAccountRepositoryDynamoDB(
+		registry.bankAccountRepository = applogic_appinfra_connector.NewBankAccountRepositoryDynamoDBConnector(
 			registry.drivenInfraRegistry.DynamoDBClient(),
 		)
 		registry.Unlock()
@@ -59,7 +59,7 @@ func (registry *DomainRepositoryRegistry) BankAccountRepository() repository.Ban
 func (registry *DomainRepositoryRegistry) TransactionRecordRepository() repository.TransactionRecordRepository {
 	if registry.transactionRecordRepository == nil {
 		registry.Lock()
-		registry.transactionRecordRepository = applogic_appinfra_connector.NewTransactionRecordRepositoryDynamoDB(
+		registry.transactionRecordRepository = applogic_appinfra_connector.NewTransactionRecordRepositoryDynamoDBConnector(
 			registry.drivenInfraRegistry.DynamoDBClient(),
 		)
 		registry.Unlock()

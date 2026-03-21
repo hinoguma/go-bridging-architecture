@@ -11,39 +11,39 @@ import (
 	"database/sql"
 )
 
-type transactionRecordRepositoryDynamoDB struct {
+type transactionRecordRepositoryDynamoDBConnector struct {
 	dynamo driven_infra_aws.DynamoDBClient
 }
 
-func (repo transactionRecordRepositoryDynamoDB) Get(ctx context.Context, id model.TransactionRecordID, optionaltFuncs ...model.DBOperationOptionalFunc) (model.TransactionRecord, error) {
+func (repo transactionRecordRepositoryDynamoDBConnector) Get(ctx context.Context, id model.TransactionRecordID, optionaltFuncs ...model.DBOperationOptionalFunc) (model.TransactionRecord, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (repo transactionRecordRepositoryDynamoDB) Create(ctx context.Context, account model.TransactionRecord, optionaltFuncs ...model.DBOperationOptionalFunc) (model.TransactionRecord, error) {
+func (repo transactionRecordRepositoryDynamoDBConnector) Create(ctx context.Context, account model.TransactionRecord, optionaltFuncs ...model.DBOperationOptionalFunc) (model.TransactionRecord, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func NewTransactionRecordRepositoryDynamoDB(
+func NewTransactionRecordRepositoryDynamoDBConnector(
 	dynamo driven_infra_aws.DynamoDBClient,
 ) repository.TransactionRecordRepository {
-	return transactionRecordRepositoryDynamoDB{
+	return transactionRecordRepositoryDynamoDBConnector{
 		dynamo: dynamo,
 	}
 }
 
-type transactionRecordRepositorySQL struct {
+type transactionRecordRepositoryPostgresConnector struct {
 	client postgres.SQLClient
 }
 
-func NewTransactionRecordRepositorySQL(client postgres.SQLClient) repository.TransactionRecordRepository {
-	return transactionRecordRepositorySQL{
+func NewTransactionRecordRepositoryPostgresConnector(client postgres.SQLClient) repository.TransactionRecordRepository {
+	return transactionRecordRepositoryPostgresConnector{
 		client: client,
 	}
 }
 
-func (repo transactionRecordRepositorySQL) Get(ctx context.Context, id model.TransactionRecordID, optionaltFuncs ...model.DBOperationOptionalFunc) (model.TransactionRecord, error) {
+func (repo transactionRecordRepositoryPostgresConnector) Get(ctx context.Context, id model.TransactionRecordID, optionaltFuncs ...model.DBOperationOptionalFunc) (model.TransactionRecord, error) {
 	var row *sql.Row
 	var err error
 
@@ -69,7 +69,7 @@ func (repo transactionRecordRepositorySQL) Get(ctx context.Context, id model.Tra
 	return sqlItem.ToModel(), nil
 }
 
-func (repo transactionRecordRepositorySQL) Create(
+func (repo transactionRecordRepositoryPostgresConnector) Create(
 	ctx context.Context,
 	item model.TransactionRecord,
 	optionaltFuncs ...model.DBOperationOptionalFunc,
@@ -92,94 +92,83 @@ func (repo transactionRecordRepositorySQL) Create(
 }
 
 type transactionRecordDTO struct {
-	id                     string
-	bankAccountId          string
-	bankUserId             string
-	recordType             string
-	depositAmountNumber    int64
-	depositAmountCurrency  string
-	withdrawAmountNumber   int64
-	withdrawAmountCurrency string
-	afterAmountNumber      int64
-	afterAmountCurrency    string
-	createdAt              int64
-	updatedAt              int64
+	postgres.TransactionRecord
 }
 
 func (item *transactionRecordDTO) SetByModel(model model.TransactionRecord) {
-	item.id = model.ID.String()
-	item.bankAccountId = model.BankAccountID.String()
-	item.bankUserId = model.BankUserID.String()
-	item.recordType = model.Type.String()
-	item.depositAmountNumber = model.DepositAmount.Amount
-	item.depositAmountCurrency = model.DepositAmount.Currency.String()
-	item.withdrawAmountNumber = model.WithdrawAmount.Amount
-	item.withdrawAmountCurrency = model.WithdrawAmount.Currency.String()
-	item.afterAmountNumber = model.AfterAmount.Amount
-	item.afterAmountCurrency = model.AfterAmount.Currency.String()
-	item.createdAt = model.CreatedAt.Unix()
-	item.updatedAt = model.UpdatedAt.Unix()
+	item.Id = model.ID.String()
+	item.BankAccountId = model.BankAccountID.String()
+	item.BankUserId = model.BankUserID.String()
+	item.RecordType = model.Type.String()
+	item.DepositAmountNumber = model.DepositAmount.Amount
+	item.DepositAmountCurrency = model.DepositAmount.Currency.String()
+	item.WithdrawAmountNumber = model.WithdrawAmount.Amount
+	item.WithdrawAmountCurrency = model.WithdrawAmount.Currency.String()
+	item.AfterAmountNumber = model.AfterAmount.Amount
+	item.AfterAmountCurrency = model.AfterAmount.Currency.String()
+	item.CreatedAt = model.CreatedAt.Unix()
+	item.UpdatedAt = model.UpdatedAt.Unix()
 }
 
 func (item *transactionRecordDTO) SetBySQLRow(row *sql.Row) error {
 	return row.Scan(
-		&item.id,
-		&item.bankAccountId,
-		&item.bankUserId,
-		&item.recordType,
-		&item.depositAmountNumber,
-		&item.depositAmountCurrency,
-		&item.withdrawAmountNumber,
-		&item.withdrawAmountCurrency,
-		&item.afterAmountNumber,
-		&item.afterAmountCurrency,
-		&item.createdAt,
-		&item.updatedAt,
+		&item.Id,
+		&item.BankAccountId,
+		&item.BankUserId,
+		&item.RecordType,
+		&item.DepositAmountNumber,
+		&item.DepositAmountCurrency,
+		&item.WithdrawAmountNumber,
+		&item.WithdrawAmountCurrency,
+		&item.AfterAmountNumber,
+		&item.AfterAmountCurrency,
+		&item.CreatedAt,
+		&item.UpdatedAt,
 	)
 }
 
 func (item transactionRecordDTO) ToModel() model.TransactionRecord {
 	modelItem := model.TransactionRecord{
-		ID: model.TransactionRecordID(item.id),
+		ID: model.TransactionRecordID(item.Id),
 		HasBankAccountID: model.HasBankAccountID{
-			BankAccountID: model.BankAccountID(item.bankAccountId),
+			BankAccountID: model.BankAccountID(item.BankAccountId),
 		},
 		HasBankUserID: model.HasBankUserID{
-			BankUserID: model.BankUserID(item.bankUserId),
+			BankUserID: model.BankUserID(item.BankUserId),
 		},
-		Type: model.TransactionType(item.recordType),
+		Type: model.TransactionType(item.RecordType),
 		DepositAmount: model.Money{
-			Amount:   item.depositAmountNumber,
-			Currency: model.Currency(item.depositAmountCurrency),
+			Amount:   item.DepositAmountNumber,
+			Currency: model.Currency(item.DepositAmountCurrency),
 		},
 		WithdrawAmount: model.Money{
-			Amount:   item.withdrawAmountNumber,
-			Currency: model.Currency(item.withdrawAmountCurrency),
+			Amount:   item.WithdrawAmountNumber,
+			Currency: model.Currency(item.WithdrawAmountCurrency),
 		},
 		AfterAmount: model.Money{
-			Amount:   item.afterAmountNumber,
-			Currency: model.Currency(item.afterAmountCurrency),
+			Amount:   item.AfterAmountNumber,
+			Currency: model.Currency(item.AfterAmountCurrency),
 		},
 	}
-	modelItem.CreatedAt = timer.TimeFromInt64(item.createdAt)
-	modelItem.UpdatedAt = timer.TimeFromInt64(item.updatedAt)
+	modelItem.CreatedAt = timer.TimeFromInt64(item.CreatedAt)
+	modelItem.UpdatedAt = timer.TimeFromInt64(item.UpdatedAt)
 	return modelItem
 }
 
 func (item transactionRecordDTO) ToMap() map[string]any {
 	return map[string]any{
-		postgres.ColumnID:                     item.id,
-		postgres.ColumnBankAccountID:          item.bankAccountId,
-		postgres.ColumnBankUserID:             item.bankUserId,
-		postgres.ColumnType:                   item.recordType,
-		postgres.ColumnDepositAmountNumber:    item.depositAmountNumber,
-		postgres.ColumnDepositAmountCurrency:  item.depositAmountCurrency,
-		postgres.ColumnWithdrawAmountNumber:   item.withdrawAmountNumber,
-		postgres.ColumnWithdrawAmountCurrency: item.withdrawAmountCurrency,
-		postgres.ColumnAfterAmountNumber:      item.afterAmountNumber,
-		postgres.ColumnAfterAmountCurrency:    item.afterAmountCurrency,
-		postgres.ColumnCreatedAt:              item.createdAt,
-		postgres.ColumnUpdatedAt:              item.updatedAt,
+		postgres.ColumnID:                     item.Id,
+		postgres.ColumnBankAccountID:          item.BankAccountId,
+		postgres.ColumnBankUserID:             item.BankUserId,
+		postgres.ColumnType:                   item.RecordType,
+		postgres.ColumnDepositAmountNumber:    item.DepositAmountNumber,
+		postgres.ColumnDepositAmountCurrency:  item.DepositAmountCurrency,
+		postgres.ColumnWithdrawAmountNumber:   item.WithdrawAmountNumber,
+		postgres.ColumnWithdrawAmountCurrency: item.WithdrawAmountCurrency,
+		postgres.ColumnAfterAmountNumber:      item.AfterAmountNumber,
+		postgres.ColumnAfterAmountCurrency:    item.AfterAmountCurrency,
+		postgres.ColumnCreatedAt:              item.CreatedAt,
+		postgres.ColumnUpdatedAt:              item.UpdatedAt,
 	}
 }
 
@@ -202,17 +191,17 @@ func (item transactionRecordDTO) Columns() []string {
 
 func (item transactionRecordDTO) Values() []any {
 	return []any{
-		item.id,
-		item.bankAccountId,
-		item.bankUserId,
-		item.recordType,
-		item.depositAmountNumber,
-		item.depositAmountCurrency,
-		item.withdrawAmountNumber,
-		item.withdrawAmountCurrency,
-		item.afterAmountNumber,
-		item.afterAmountCurrency,
-		item.createdAt,
-		item.updatedAt,
+		item.Id,
+		item.BankAccountId,
+		item.BankUserId,
+		item.RecordType,
+		item.DepositAmountNumber,
+		item.DepositAmountCurrency,
+		item.WithdrawAmountNumber,
+		item.WithdrawAmountCurrency,
+		item.AfterAmountNumber,
+		item.AfterAmountCurrency,
+		item.CreatedAt,
+		item.UpdatedAt,
 	}
 }
