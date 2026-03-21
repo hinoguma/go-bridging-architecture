@@ -1,20 +1,20 @@
 package setup
 
 import (
-	"app/internal/callapp/lambdaapigw"
-	"app/internal/callapp_applogic_connector/lambdaapigw_connector"
+	"app/internal/appinout/lambdaapigw"
+	"app/internal/appinout_applogic_connector/lambdaapigw_connector"
 	"context"
 	"sync"
 )
 
-type CallAppRegistry struct {
+type AppInOutRegistry struct {
 	sync.Mutex
 	useCaseRegistry *UseCaseRegistry
 	depositHandler  lambdaapigw.LambdaAPIGWHandler
 	withdrawHandler lambdaapigw.LambdaAPIGWHandler
 }
 
-func (registry *CallAppRegistry) Initialize(
+func (registry *AppInOutRegistry) Initialize(
 	ctx context.Context,
 	useCaseRegistry *UseCaseRegistry,
 ) {
@@ -29,7 +29,7 @@ func (registry *CallAppRegistry) Initialize(
 	registry.Unlock()
 }
 
-func (registry *CallAppRegistry) DepositHandler() lambdaapigw.LambdaAPIGWHandler {
+func (registry *AppInOutRegistry) DepositHandler() lambdaapigw.LambdaAPIGWHandler {
 	if registry.depositHandler == nil {
 		registry.Lock()
 		handler := lambdaapigw_connector.NewDepositHandlerConnector(
@@ -41,7 +41,7 @@ func (registry *CallAppRegistry) DepositHandler() lambdaapigw.LambdaAPIGWHandler
 	return registry.depositHandler
 }
 
-func (registry *CallAppRegistry) WithdrawHandler() lambdaapigw.LambdaAPIGWHandler {
+func (registry *AppInOutRegistry) WithdrawHandler() lambdaapigw.LambdaAPIGWHandler {
 	if registry.withdrawHandler == nil {
 		registry.Lock()
 		handler := lambdaapigw_connector.NewWithdrawHandlerConnector(
@@ -53,8 +53,8 @@ func (registry *CallAppRegistry) WithdrawHandler() lambdaapigw.LambdaAPIGWHandle
 	return registry.withdrawHandler
 }
 
-func GetCallAppRegistry() *CallAppRegistry {
-	return &callAppRegistry
+func GetAppInOutRegistry() *AppInOutRegistry {
+	return &appInOutRegistry
 }
 
-var callAppRegistry CallAppRegistry = CallAppRegistry{}
+var appInOutRegistry AppInOutRegistry = AppInOutRegistry{}

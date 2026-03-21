@@ -1,9 +1,9 @@
 package lambdaapigw_connector
 
 import (
+	"app/internal/appinout/lambdaapigw"
 	"app/internal/applogic/domain/model"
 	"app/internal/applogic/usecase"
-	"app/internal/callapp/lambdaapigw"
 	"app/internal/crosscutting"
 	"app/internal/crosscutting/errors"
 	"context"

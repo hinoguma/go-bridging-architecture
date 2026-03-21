@@ -2,7 +2,7 @@ package main
 
 import (
 	"app/internal/appinfra/postgres"
-	"app/internal/callapp/lambdaapigw"
+	"app/internal/appinout/lambdaapigw"
 	"app/internal/crosscutting"
 	"app/internal/crosscutting/errors"
 	"app/internal/crosscutting/infra"
@@ -42,7 +42,6 @@ type application struct {
 func (app *application) coldStart() error {
 	log.Info("cold start started")
 
-	// setup application
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, lambdaapigw.RequestIDKey, "cold_start_request_id")
 
@@ -53,7 +52,6 @@ func (app *application) coldStart() error {
 	timer.SetGlobalTimeGenerator(infra.NewJstTimeGenerator())
 	errors.SetContextRequestIDKey(lambdaapigw.RequestIDKey)
 
-	// set up user call -> app infra
 	db, err := postgres.NewPostgresDBFromEnv()
 	if err != nil {
 		return errors.LiftWithCtx(err, ctx)
@@ -71,12 +69,12 @@ func (app *application) coldStart() error {
 		setup.GetDomainRepositoryRegistry(),
 		setup.GetDomainServiceRegistry(),
 	)
-	setup.GetCallAppMiddlewareRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
-	setup.GetCallAppRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
+	setup.GetAppInOutMiddlewareRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
+	setup.GetAppInOutRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
 
 	router := lambdaapigw.NewAPIRouter(
-		setup.GetCallAppRegistry(),
-		setup.GetCallAppMiddlewareRegistry(),
+		setup.GetAppInOutRegistry(),
+		setup.GetAppInOutMiddlewareRegistry(),
 	)
 	app.router = &router
 

@@ -1,20 +1,20 @@
 package setup
 
 import (
-	"app/internal/callapp/lambdaapigw"
-	"app/internal/callapp_applogic_connector/lambdaapigw_connector"
+	"app/internal/appinout/lambdaapigw"
+	"app/internal/appinout_applogic_connector/lambdaapigw_connector"
 	"context"
 	"sync"
 )
 
-type CallAppMiddlewareRegistry struct {
+type AppInOutMiddlewareRegistry struct {
 	sync.Mutex
 	useCaseRegistry *UseCaseRegistry
 
 	authenticateBeforeMiddleware lambdaapigw.BeforeMiddleware
 }
 
-func (registry *CallAppMiddlewareRegistry) Initialize(ctx context.Context, useCaseRegistry *UseCaseRegistry) {
+func (registry *AppInOutMiddlewareRegistry) Initialize(ctx context.Context, useCaseRegistry *UseCaseRegistry) {
 	registry.Lock()
 	registry.useCaseRegistry = useCaseRegistry
 	registry.authenticateBeforeMiddleware = lambdaapigw_connector.NewAuthenticateBeforeMiddleware(
@@ -23,7 +23,7 @@ func (registry *CallAppMiddlewareRegistry) Initialize(ctx context.Context, useCa
 	registry.Unlock()
 }
 
-func (registry *CallAppMiddlewareRegistry) AuthenticateBeforeMiddleware() lambdaapigw.BeforeMiddleware {
+func (registry *AppInOutMiddlewareRegistry) AuthenticateBeforeMiddleware() lambdaapigw.BeforeMiddleware {
 	if registry.authenticateBeforeMiddleware == nil {
 		registry.Lock()
 		registry.authenticateBeforeMiddleware = lambdaapigw_connector.NewAuthenticateBeforeMiddleware(
@@ -34,8 +34,8 @@ func (registry *CallAppMiddlewareRegistry) AuthenticateBeforeMiddleware() lambda
 	return registry.authenticateBeforeMiddleware
 }
 
-var callAppMiddlewareRegistry CallAppMiddlewareRegistry = CallAppMiddlewareRegistry{}
+var appInOutMiddlewareRegistry AppInOutMiddlewareRegistry = AppInOutMiddlewareRegistry{}
 
-func GetCallAppMiddlewareRegistry() *CallAppMiddlewareRegistry {
-	return &callAppMiddlewareRegistry
+func GetAppInOutMiddlewareRegistry() *AppInOutMiddlewareRegistry {
+	return &appInOutMiddlewareRegistry
 }
