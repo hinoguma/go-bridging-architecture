@@ -7,14 +7,14 @@ import (
 	"sync"
 )
 
-type DriverInterfaceRegistry struct {
+type CallAppRegistry struct {
 	sync.Mutex
 	useCaseRegistry *UseCaseRegistry
 	depositHandler  lambdaapigw.LambdaAPIGWHandler
 	withdrawHandler lambdaapigw.LambdaAPIGWHandler
 }
 
-func (registry *DriverInterfaceRegistry) Initialize(
+func (registry *CallAppRegistry) Initialize(
 	ctx context.Context,
 	useCaseRegistry *UseCaseRegistry,
 ) {
@@ -29,7 +29,7 @@ func (registry *DriverInterfaceRegistry) Initialize(
 	registry.Unlock()
 }
 
-func (registry *DriverInterfaceRegistry) DepositHandler() lambdaapigw.LambdaAPIGWHandler {
+func (registry *CallAppRegistry) DepositHandler() lambdaapigw.LambdaAPIGWHandler {
 	if registry.depositHandler == nil {
 		registry.Lock()
 		handler := lambdaapigw_connector.NewDepositHandlerConnector(
@@ -41,7 +41,7 @@ func (registry *DriverInterfaceRegistry) DepositHandler() lambdaapigw.LambdaAPIG
 	return registry.depositHandler
 }
 
-func (registry *DriverInterfaceRegistry) WithdrawHandler() lambdaapigw.LambdaAPIGWHandler {
+func (registry *CallAppRegistry) WithdrawHandler() lambdaapigw.LambdaAPIGWHandler {
 	if registry.withdrawHandler == nil {
 		registry.Lock()
 		handler := lambdaapigw_connector.NewWithdrawHandlerConnector(
@@ -53,8 +53,8 @@ func (registry *DriverInterfaceRegistry) WithdrawHandler() lambdaapigw.LambdaAPI
 	return registry.withdrawHandler
 }
 
-func GetDriverInterfaceRegistry() *DriverInterfaceRegistry {
-	return &driverInterfaceRegistry
+func GetCallAppRegistry() *CallAppRegistry {
+	return &callAppRegistry
 }
 
-var driverInterfaceRegistry DriverInterfaceRegistry = DriverInterfaceRegistry{}
+var callAppRegistry CallAppRegistry = CallAppRegistry{}

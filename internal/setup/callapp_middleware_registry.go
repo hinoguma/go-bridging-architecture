@@ -7,14 +7,14 @@ import (
 	"sync"
 )
 
-type DriverInterfaceMiddlewareRegistry struct {
+type CallAppMiddlewareRegistry struct {
 	sync.Mutex
 	useCaseRegistry *UseCaseRegistry
 
 	authenticateBeforeMiddleware lambdaapigw.BeforeMiddleware
 }
 
-func (registry *DriverInterfaceMiddlewareRegistry) Initialize(ctx context.Context, useCaseRegistry *UseCaseRegistry) {
+func (registry *CallAppMiddlewareRegistry) Initialize(ctx context.Context, useCaseRegistry *UseCaseRegistry) {
 	registry.Lock()
 	registry.useCaseRegistry = useCaseRegistry
 	registry.authenticateBeforeMiddleware = lambdaapigw_connector.NewAuthenticateBeforeMiddleware(
@@ -23,7 +23,7 @@ func (registry *DriverInterfaceMiddlewareRegistry) Initialize(ctx context.Contex
 	registry.Unlock()
 }
 
-func (registry *DriverInterfaceMiddlewareRegistry) AuthenticateBeforeMiddleware() lambdaapigw.BeforeMiddleware {
+func (registry *CallAppMiddlewareRegistry) AuthenticateBeforeMiddleware() lambdaapigw.BeforeMiddleware {
 	if registry.authenticateBeforeMiddleware == nil {
 		registry.Lock()
 		registry.authenticateBeforeMiddleware = lambdaapigw_connector.NewAuthenticateBeforeMiddleware(
@@ -34,8 +34,8 @@ func (registry *DriverInterfaceMiddlewareRegistry) AuthenticateBeforeMiddleware(
 	return registry.authenticateBeforeMiddleware
 }
 
-var driverInterfaceMiddlewareRegistry DriverInterfaceMiddlewareRegistry = DriverInterfaceMiddlewareRegistry{}
+var callAppMiddlewareRegistry CallAppMiddlewareRegistry = CallAppMiddlewareRegistry{}
 
-func GetDriverInterfaceMiddlewareRegistry() *DriverInterfaceMiddlewareRegistry {
-	return &driverInterfaceMiddlewareRegistry
+func GetCallAppMiddlewareRegistry() *CallAppMiddlewareRegistry {
+	return &callAppMiddlewareRegistry
 }

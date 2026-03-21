@@ -53,11 +53,11 @@ func coldStart() error {
 	if err != nil {
 		return errors.LiftWithCtx(err, ctx)
 	}
-	err = setup.GetDrivenInfraRegistry().Initialize(ctx, db)
+	err = setup.GetAppInfraRegistry().Initialize(ctx, db)
 	if err != nil {
 		return errors.LiftWithCtx(err, ctx)
 	}
-	setup.GetDomainRepositoryRegistry().Initialize(ctx, setup.GetDrivenInfraRegistry())
+	setup.GetDomainRepositoryRegistry().Initialize(ctx, setup.GetAppInfraRegistry())
 	setup.GetDomainServiceRegistry().Initialize(
 		ctx, setup.GetDomainRepositoryRegistry(),
 	)
@@ -66,12 +66,12 @@ func coldStart() error {
 		setup.GetDomainRepositoryRegistry(),
 		setup.GetDomainServiceRegistry(),
 	)
-	setup.GetDriverInterfaceMiddlewareRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
-	setup.GetDriverInterfaceRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
+	setup.GetCallAppMiddlewareRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
+	setup.GetCallAppRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
 
 	apiRouter = NewAPIRouter(
-		setup.GetDriverInterfaceRegistry(),
-		setup.GetDriverInterfaceMiddlewareRegistry(),
+		setup.GetCallAppRegistry(),
+		setup.GetCallAppMiddlewareRegistry(),
 	)
 
 	log.Info("cold start completed")

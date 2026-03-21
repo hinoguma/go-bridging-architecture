@@ -9,8 +9,8 @@ import (
 )
 
 type APIRouter struct {
-	driverInterfaceRegistry           *setup.DriverInterfaceRegistry
-	driverInterfaceMiddlewareRegistry *setup.DriverInterfaceMiddlewareRegistry
+	callAppRegistry           *setup.CallAppRegistry
+	callAppMiddlewareRegistry *setup.CallAppMiddlewareRegistry
 }
 
 func (router APIRouter) Do(
@@ -22,13 +22,13 @@ func (router APIRouter) Do(
 	var handler lambdaapigw.LambdaAPIGWHandler
 
 	beforeMiddlewares.AddItem(
-		router.driverInterfaceMiddlewareRegistry.AuthenticateBeforeMiddleware(),
+		router.callAppMiddlewareRegistry.AuthenticateBeforeMiddleware(),
 	)
 
 	if event.Path == "/bank/account/deposit" && event.HTTPMethod == "POST" {
-		handler = router.driverInterfaceRegistry.DepositHandler()
+		handler = router.callAppRegistry.DepositHandler()
 	} else if event.Path == "/bank/account/withdraw" && event.HTTPMethod == "POST" {
-		handler = router.driverInterfaceRegistry.WithdrawHandler()
+		handler = router.callAppRegistry.WithdrawHandler()
 	} else {
 
 	}
@@ -37,11 +37,11 @@ func (router APIRouter) Do(
 }
 
 func NewAPIRouter(
-	driverInterfaceRegistry *setup.DriverInterfaceRegistry,
-	driverInterfaceMiddlewareRegistry *setup.DriverInterfaceMiddlewareRegistry,
+	callAppRegistry *setup.CallAppRegistry,
+	callAppMiddlewareRegistry *setup.CallAppMiddlewareRegistry,
 ) APIRouter {
 	return APIRouter{
-		driverInterfaceRegistry:           driverInterfaceRegistry,
-		driverInterfaceMiddlewareRegistry: driverInterfaceMiddlewareRegistry,
+		callAppRegistry:           callAppRegistry,
+		callAppMiddlewareRegistry: callAppMiddlewareRegistry,
 	}
 }
