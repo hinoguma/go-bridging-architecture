@@ -15,11 +15,11 @@ type APIRouter struct {
 
 func (router APIRouter) Do(
 	ctx context.Context, event events.APIGatewayProxyRequest,
-) (lambdaapigw.BeforeMiddlewareCollection, lambdaapigw.LambdaAPIGWBHandler, lambdaapigw.AfterMiddlewareCollection) {
+) (lambdaapigw.BeforeMiddlewareCollection, lambdaapigw.LambdaAPIGWHandler, lambdaapigw.AfterMiddlewareCollection) {
 
 	beforeMiddlewares := lambdaapigw.BeforeMiddlewareCollection{}
 	afterMiddlewares := lambdaapigw.AfterMiddlewareCollection{}
-	var handler lambdaapigw.LambdaAPIGWBHandler
+	var handler lambdaapigw.LambdaAPIGWHandler
 
 	beforeMiddlewares.AddItem(
 		router.driverInterfaceMiddlewareRegistry.AuthenticateBeforeMiddleware(),

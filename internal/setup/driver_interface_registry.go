@@ -10,8 +10,8 @@ import (
 type DriverInterfaceRegistry struct {
 	sync.Mutex
 	useCaseRegistry *UseCaseRegistry
-	depositHandler  lambdaapigw.LambdaAPIGWBHandler
-	withdrawHandler lambdaapigw.LambdaAPIGWBHandler
+	depositHandler  lambdaapigw.LambdaAPIGWHandler
+	withdrawHandler lambdaapigw.LambdaAPIGWHandler
 }
 
 func (registry *DriverInterfaceRegistry) Initialize(
@@ -21,7 +21,7 @@ func (registry *DriverInterfaceRegistry) Initialize(
 	registry.Lock()
 	registry.useCaseRegistry = useCaseRegistry
 
-	handler := lambdaapigw_connector.NewDepositHandlerLambdaAPIGateway(
+	handler := lambdaapigw_connector.NewDepositHandlerConnector(
 		registry.useCaseRegistry.DepositUseCase(),
 	)
 	registry.depositHandler = handler
@@ -29,10 +29,10 @@ func (registry *DriverInterfaceRegistry) Initialize(
 	registry.Unlock()
 }
 
-func (registry *DriverInterfaceRegistry) DepositHandler() lambdaapigw.LambdaAPIGWBHandler {
+func (registry *DriverInterfaceRegistry) DepositHandler() lambdaapigw.LambdaAPIGWHandler {
 	if registry.depositHandler == nil {
 		registry.Lock()
-		handler := lambdaapigw_connector.NewDepositHandlerLambdaAPIGateway(
+		handler := lambdaapigw_connector.NewDepositHandlerConnector(
 			registry.useCaseRegistry.DepositUseCase(),
 		)
 		registry.depositHandler = handler
@@ -41,10 +41,10 @@ func (registry *DriverInterfaceRegistry) DepositHandler() lambdaapigw.LambdaAPIG
 	return registry.depositHandler
 }
 
-func (registry *DriverInterfaceRegistry) WithdrawHandler() lambdaapigw.LambdaAPIGWBHandler {
+func (registry *DriverInterfaceRegistry) WithdrawHandler() lambdaapigw.LambdaAPIGWHandler {
 	if registry.withdrawHandler == nil {
 		registry.Lock()
-		handler := lambdaapigw_connector.NewWithdrawHandlerLambdaAPIGateway(
+		handler := lambdaapigw_connector.NewWithdrawHandlerConnector(
 			registry.useCaseRegistry.WithdrawUseCase(),
 		)
 		registry.withdrawHandler = handler

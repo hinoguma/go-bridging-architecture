@@ -10,17 +10,17 @@ import (
 	"encoding/json"
 )
 
-func NewWithdrawHandlerLambdaAPIGateway(
+func NewWithdrawHandlerConnector(
 	uc usecase.WithdrawUseCase,
-) lambdaapigw.LambdaAPIGWBHandler {
-	return WithdrawHandlerLambdaAPIGateway{uc: uc}
+) lambdaapigw.LambdaAPIGWHandler {
+	return WithdrawHandlerConnector{uc: uc}
 }
 
-type WithdrawHandlerLambdaAPIGateway struct {
+type WithdrawHandlerConnector struct {
 	uc usecase.WithdrawUseCase
 }
 
-func (handler WithdrawHandlerLambdaAPIGateway) Do(ctx context.Context, request lambdaapigw.HandlerRequest) (lambdaapigw.HandlerResponse, error) {
+func (handler WithdrawHandlerConnector) Do(ctx context.Context, request lambdaapigw.HandlerRequest) (lambdaapigw.HandlerResponse, error) {
 	internalServerErr := lambdaapigw.NewInternalServerErrorResponse()
 
 	body, err := DecodeEventToWithdrawRequestBodyDTO(request)

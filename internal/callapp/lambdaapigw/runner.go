@@ -7,7 +7,7 @@ import (
 
 func NewLambdaAPIGWHandlerRunner(
 	beforeMiddlewares BeforeMiddlewareCollection,
-	handler LambdaAPIGWBHandler,
+	handler LambdaAPIGWHandler,
 	afterMiddlewares AfterMiddlewareCollection,
 ) LambdaAPIGWHandlerRunner {
 	return LambdaAPIGWHandlerRunner{
@@ -19,7 +19,7 @@ func NewLambdaAPIGWHandlerRunner(
 
 type LambdaAPIGWHandlerRunner struct {
 	beforeMiddlewares BeforeMiddlewareCollection
-	handler           LambdaAPIGWBHandler
+	handler           LambdaAPIGWHandler
 	afterMiddlewares  AfterMiddlewareCollection
 }
 

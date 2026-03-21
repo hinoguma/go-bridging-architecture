@@ -10,17 +10,17 @@ import (
 	"encoding/json"
 )
 
-func NewDepositHandlerLambdaAPIGateway(
+func NewDepositHandlerConnector(
 	uc usecase.DepositUseCase,
-) lambdaapigw.LambdaAPIGWBHandler {
-	return DepositHandlerLambdaAPIGateway{uc: uc}
+) lambdaapigw.LambdaAPIGWHandler {
+	return DepositHandlerConnector{uc: uc}
 }
 
-type DepositHandlerLambdaAPIGateway struct {
+type DepositHandlerConnector struct {
 	uc usecase.DepositUseCase
 }
 
-func (handler DepositHandlerLambdaAPIGateway) Do(ctx context.Context, request lambdaapigw.HandlerRequest) (lambdaapigw.HandlerResponse, error) {
+func (handler DepositHandlerConnector) Do(ctx context.Context, request lambdaapigw.HandlerRequest) (lambdaapigw.HandlerResponse, error) {
 	internalServerErr := lambdaapigw.NewInternalServerErrorResponse()
 
 	body, err := DecodeEventToDepositRequestBodyDTO(request)
