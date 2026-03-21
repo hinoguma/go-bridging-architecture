@@ -110,23 +110,6 @@ func (item *transactionRecordDTO) SetByModel(model model.TransactionRecord) {
 	item.UpdatedAt = model.UpdatedAt.Unix()
 }
 
-func (item *transactionRecordDTO) SetBySQLRow(row *sql.Row) error {
-	return row.Scan(
-		&item.Id,
-		&item.BankAccountId,
-		&item.BankUserId,
-		&item.RecordType,
-		&item.DepositAmountNumber,
-		&item.DepositAmountCurrency,
-		&item.WithdrawAmountNumber,
-		&item.WithdrawAmountCurrency,
-		&item.AfterAmountNumber,
-		&item.AfterAmountCurrency,
-		&item.CreatedAt,
-		&item.UpdatedAt,
-	)
-}
-
 func (item transactionRecordDTO) ToModel() model.TransactionRecord {
 	modelItem := model.TransactionRecord{
 		ID: model.TransactionRecordID(item.Id),
@@ -153,55 +136,4 @@ func (item transactionRecordDTO) ToModel() model.TransactionRecord {
 	modelItem.CreatedAt = timer.TimeFromInt64(item.CreatedAt)
 	modelItem.UpdatedAt = timer.TimeFromInt64(item.UpdatedAt)
 	return modelItem
-}
-
-func (item transactionRecordDTO) ToMap() map[string]any {
-	return map[string]any{
-		postgres.ColumnID:                     item.Id,
-		postgres.ColumnBankAccountID:          item.BankAccountId,
-		postgres.ColumnBankUserID:             item.BankUserId,
-		postgres.ColumnType:                   item.RecordType,
-		postgres.ColumnDepositAmountNumber:    item.DepositAmountNumber,
-		postgres.ColumnDepositAmountCurrency:  item.DepositAmountCurrency,
-		postgres.ColumnWithdrawAmountNumber:   item.WithdrawAmountNumber,
-		postgres.ColumnWithdrawAmountCurrency: item.WithdrawAmountCurrency,
-		postgres.ColumnAfterAmountNumber:      item.AfterAmountNumber,
-		postgres.ColumnAfterAmountCurrency:    item.AfterAmountCurrency,
-		postgres.ColumnCreatedAt:              item.CreatedAt,
-		postgres.ColumnUpdatedAt:              item.UpdatedAt,
-	}
-}
-
-func (item transactionRecordDTO) Columns() []string {
-	return []string{
-		postgres.ColumnID,
-		postgres.ColumnBankAccountID,
-		postgres.ColumnBankUserID,
-		postgres.ColumnType,
-		postgres.ColumnDepositAmountNumber,
-		postgres.ColumnDepositAmountCurrency,
-		postgres.ColumnWithdrawAmountNumber,
-		postgres.ColumnWithdrawAmountCurrency,
-		postgres.ColumnAfterAmountNumber,
-		postgres.ColumnAfterAmountCurrency,
-		postgres.ColumnCreatedAt,
-		postgres.ColumnUpdatedAt,
-	}
-}
-
-func (item transactionRecordDTO) Values() []any {
-	return []any{
-		item.Id,
-		item.BankAccountId,
-		item.BankUserId,
-		item.RecordType,
-		item.DepositAmountNumber,
-		item.DepositAmountCurrency,
-		item.WithdrawAmountNumber,
-		item.WithdrawAmountCurrency,
-		item.AfterAmountNumber,
-		item.AfterAmountCurrency,
-		item.CreatedAt,
-		item.UpdatedAt,
-	}
 }
