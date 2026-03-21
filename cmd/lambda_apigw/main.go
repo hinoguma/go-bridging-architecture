@@ -18,8 +18,9 @@ import (
 
 func main() {
 
-	// cold start phase: initialize application and infrastructure
-	err := coldStart()
+	// lambda cold start phase
+	app := application{}
+	err := app.coldStart()
 	if err != nil {
 		log.Error(
 			"error in cold start",
@@ -29,12 +30,16 @@ func main() {
 	}
 
 	// start lambda: this is like web server start.
-	lambda.Start(lambdaHandler)
+	lambda.Start(app.lambdaHandler)
 }
 
-var apiRouter APIRouter
+var apiRouter lambdaapigw.APIRouter
 
-func coldStart() error {
+type application struct {
+	router *lambdaapigw.APIRouter
+}
+
+func (app *application) coldStart() error {
 	log.Info("cold start started")
 
 	// setup application
@@ -69,16 +74,17 @@ func coldStart() error {
 	setup.GetCallAppMiddlewareRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
 	setup.GetCallAppRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
 
-	apiRouter = NewAPIRouter(
+	router := lambdaapigw.NewAPIRouter(
 		setup.GetCallAppRegistry(),
 		setup.GetCallAppMiddlewareRegistry(),
 	)
+	app.router = &router
 
 	log.Info("cold start completed")
 	return nil
 }
 
-func lambdaHandler(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func (app *application) lambdaHandler(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	requestID := "unknown_request_id"
 	LambdaContext, ok := lambdacontext.FromContext(ctx)
 	if ok {
@@ -92,7 +98,17 @@ func lambdaHandler(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 		log.WithRequestID(requestID),
 	)
 
-	beforeMiddlewares, handler, afterMiddlewares := apiRouter.Do(ctx, event)
+	if app.router == nil {
+		err := errors.NewWithCtx("router is not initialized", ctx)
+		log.Error(
+			"router is not initialized",
+			log.WithErr(err),
+			log.WithRequestID(requestID),
+		)
+		return lambdaapigw.NewInternalServerErrorResponse().Raw, err
+	}
+
+	beforeMiddlewares, handler, afterMiddlewares := app.router.Do(ctx, event)
 	if handler == nil {
 		handlerResp := lambdaapigw.NewNotFoundErrorResponse()
 		return handlerResp.Raw, nil
