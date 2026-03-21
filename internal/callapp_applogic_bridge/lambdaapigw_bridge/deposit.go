@@ -3,12 +3,11 @@ package lambdaapigw_bridge
 import (
 	"app/internal/applogic/domain/model"
 	"app/internal/applogic/usecase"
+	"app/internal/callapp/lambdaapigw"
 	"app/internal/crosscutting"
 	"app/internal/crosscutting/errors"
-	"app/internal/driver_entrance/lambdaapigw"
 	"context"
 	"encoding/json"
-	"fmt"
 )
 
 func NewDepositHandlerLambdaAPIGateway(
@@ -24,12 +23,12 @@ type DepositHandlerLambdaAPIGateway struct {
 func (handler DepositHandlerLambdaAPIGateway) Do(ctx context.Context, request lambdaapigw.HandlerRequest) (lambdaapigw.HandlerResponse, error) {
 	internalServerErr := lambdaapigw.NewInternalServerErrorResponse()
 
-	body, err := DecodeEventToDepositRequestBody(request)
+	body, err := DecodeEventToDepositRequestBodyDTO(request)
 	if err != nil {
 		return lambdaapigw.NewBodyDecodingErrorResponse(), errors.LiftWithCtx(err, ctx)
 	}
 
-	validateDetails := ValidateDepositRequestBody(body)
+	validateDetails := ValidateDepositRequestBodyDTO(body)
 	if len(validateDetails) > 0 {
 		return lambdaapigw.NewValidateErrorResponseFromValidateDetails(validateDetails), nil
 	}
@@ -45,8 +44,8 @@ func (handler DepositHandlerLambdaAPIGateway) Do(ctx context.Context, request la
 	return resp, nil
 }
 
-func DecodeEventToDepositRequestBody(request lambdaapigw.HandlerRequest) (DepositRequestBody, error) {
-	body := DepositRequestBody{}
+func DecodeEventToDepositRequestBodyDTO(request lambdaapigw.HandlerRequest) (DepositRequestBodyDTO, error) {
+	body := DepositRequestBodyDTO{}
 	err := json.Unmarshal([]byte(request.Raw.Body), &body)
 	if err != nil {
 		return body, errors.Lift(err)
@@ -54,7 +53,7 @@ func DecodeEventToDepositRequestBody(request lambdaapigw.HandlerRequest) (Deposi
 	return body, nil
 }
 
-func ConvertToDepositUseCaseInput(req lambdaapigw.HandlerRequest, body DepositRequestBody) usecase.DepositUseCaseInput {
+func ConvertToDepositUseCaseInput(req lambdaapigw.HandlerRequest, body DepositRequestBodyDTO) usecase.DepositUseCaseInput {
 	return usecase.DepositUseCaseInput{
 		BankAccountID: GetBankAccountIDFromAuthenticatedRequest(req),
 		TransactionID: body.GetTransactionRecordID(),
@@ -63,39 +62,35 @@ func ConvertToDepositUseCaseInput(req lambdaapigw.HandlerRequest, body DepositRe
 }
 
 func ConvertDepositUseCaseOutputToHandlerResponse(output usecase.DepositUseCaseOutput) lambdaapigw.HandlerResponse {
-	return lambdaapigw.NewSuccessResponse(
-		fmt.Sprintf("{\"transactionId\": \"%s\"}", output.TransactionRecord.ID.String()),
+	return lambdaapigw.NewDepositSuccessResponse(
+		output.TransactionRecord.ID.String(),
 	)
 }
 
-type DepositRequestBody struct {
-	TransactionRecordID *string `json:"transactionRecordId,omitempty"`
-	Amount              *int64  `json:"amount,omitempty"`
-	Currency            *string `json:"currency,omitempty"`
-}
+type DepositRequestBodyDTO lambdaapigw.DepositRequestBody
 
-func (body DepositRequestBody) GetAmount() int64 {
+func (body DepositRequestBodyDTO) GetAmount() int64 {
 	if body.Amount == nil {
 		return 0
 	}
 	return *body.Amount
 }
 
-func (body DepositRequestBody) GetCurrency() model.Currency {
+func (body DepositRequestBodyDTO) GetCurrency() model.Currency {
 	if body.Currency == nil {
 		return ""
 	}
 	return model.Currency(*body.Currency)
 }
 
-func (body DepositRequestBody) Money() model.Money {
+func (body DepositRequestBodyDTO) Money() model.Money {
 	return model.Money{
 		Amount:   body.GetAmount(),
 		Currency: body.GetCurrency(),
 	}
 }
 
-func (body DepositRequestBody) GetTransactionRecordID() *model.TransactionRecordID {
+func (body DepositRequestBodyDTO) GetTransactionRecordID() *model.TransactionRecordID {
 	if body.TransactionRecordID == nil {
 		return nil
 	}
@@ -103,7 +98,7 @@ func (body DepositRequestBody) GetTransactionRecordID() *model.TransactionRecord
 	return &id
 }
 
-func ValidateDepositRequestBody(body DepositRequestBody) []crosscutting.ValidateDetail {
+func ValidateDepositRequestBodyDTO(body DepositRequestBodyDTO) []crosscutting.ValidateDetail {
 	details := make([]crosscutting.ValidateDetail, 0)
 
 	if body.Amount == nil {

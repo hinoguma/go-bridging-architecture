@@ -42,7 +42,3 @@ func (req HandlerRequest) GetAuthenticatedBankAccountID() string {
 func NewHandlerRequest(raw events.APIGatewayProxyRequest) HandlerRequest {
 	return HandlerRequest{Raw: raw}
 }
-
-type HandlerResponse struct {
-	Raw events.APIGatewayProxyResponse
-}

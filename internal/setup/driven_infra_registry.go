@@ -1,9 +1,9 @@
 package setup
 
 import (
+	"app/internal/appinfra/aws"
+	"app/internal/appinfra/postgres"
 	"app/internal/crosscutting/errors"
-	"app/internal/driven_infra/aws"
-	"app/internal/driven_infra/postgres"
 	"context"
 	"database/sql"
 	"sync"

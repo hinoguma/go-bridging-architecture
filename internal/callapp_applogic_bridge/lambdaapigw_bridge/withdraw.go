@@ -3,12 +3,11 @@ package lambdaapigw_bridge
 import (
 	"app/internal/applogic/domain/model"
 	"app/internal/applogic/usecase"
+	"app/internal/callapp/lambdaapigw"
 	"app/internal/crosscutting"
 	"app/internal/crosscutting/errors"
-	"app/internal/driver_entrance/lambdaapigw"
 	"context"
 	"encoding/json"
-	"fmt"
 )
 
 func NewWithdrawHandlerLambdaAPIGateway(
@@ -24,12 +23,12 @@ type WithdrawHandlerLambdaAPIGateway struct {
 func (handler WithdrawHandlerLambdaAPIGateway) Do(ctx context.Context, request lambdaapigw.HandlerRequest) (lambdaapigw.HandlerResponse, error) {
 	internalServerErr := lambdaapigw.NewInternalServerErrorResponse()
 
-	body, err := DecodeEventToWithdrawRequestBody(request)
+	body, err := DecodeEventToWithdrawRequestBodyDTO(request)
 	if err != nil {
 		return lambdaapigw.NewBodyDecodingErrorResponse(), errors.LiftWithCtx(err, ctx)
 	}
 
-	validateDetails := ValidateWithdrawRequestBody(body)
+	validateDetails := ValidateWithdrawRequestBodyDTO(body)
 	if len(validateDetails) > 0 {
 		return lambdaapigw.NewValidateErrorResponseFromValidateDetails(validateDetails), nil
 	}
@@ -45,8 +44,8 @@ func (handler WithdrawHandlerLambdaAPIGateway) Do(ctx context.Context, request l
 	return resp, nil
 }
 
-func DecodeEventToWithdrawRequestBody(request lambdaapigw.HandlerRequest) (WithdrawRequestBody, error) {
-	body := WithdrawRequestBody{}
+func DecodeEventToWithdrawRequestBodyDTO(request lambdaapigw.HandlerRequest) (WithdrawRequestBodyDTO, error) {
+	body := WithdrawRequestBodyDTO{}
 	err := json.Unmarshal([]byte(request.Raw.Body), &body)
 	if err != nil {
 		return body, errors.Lift(err)
@@ -54,7 +53,7 @@ func DecodeEventToWithdrawRequestBody(request lambdaapigw.HandlerRequest) (Withd
 	return body, nil
 }
 
-func ConvertToWithdrawUseCaseInput(req lambdaapigw.HandlerRequest, body WithdrawRequestBody) usecase.WithdrawUseCaseInput {
+func ConvertToWithdrawUseCaseInput(req lambdaapigw.HandlerRequest, body WithdrawRequestBodyDTO) usecase.WithdrawUseCaseInput {
 	return usecase.WithdrawUseCaseInput{
 		BankAccountID: GetBankAccountIDFromAuthenticatedRequest(req),
 		TransactionID: body.GetTransactionRecordID(),
@@ -64,46 +63,37 @@ func ConvertToWithdrawUseCaseInput(req lambdaapigw.HandlerRequest, body Withdraw
 
 func ConvertWithdrawUseCaseOutputToHandlerResponse(output usecase.WithdrawUseCaseOutput) lambdaapigw.HandlerResponse {
 	if output.NotEnoughBalance {
-		return lambdaapigw.NewErrorResponse(
-			NotEnoughBalanceAPIStatus,
-			"your balance is not enough for this withdraw",
-			nil,
-		)
+		return lambdaapigw.NewNotEnoughBalanceResponse()
 	}
-
-	return lambdaapigw.NewSuccessResponse(
-		fmt.Sprintf("{\"transactionId\": \"%s\"}", output.TransactionRecord.ID.String()),
+	return lambdaapigw.NewWithdrawSuccessResponse(
+		output.TransactionRecord.ID.String(),
 	)
 }
 
-type WithdrawRequestBody struct {
-	TransactionRecordID *string `json:"transactionRecordId,omitempty"`
-	Amount              *int64  `json:"amount,omitempty"`
-	Currency            *string `json:"currency,omitempty"`
-}
+type WithdrawRequestBodyDTO lambdaapigw.WithdrawRequestBody
 
-func (body WithdrawRequestBody) GetAmount() int64 {
+func (body WithdrawRequestBodyDTO) GetAmount() int64 {
 	if body.Amount == nil {
 		return 0
 	}
 	return *body.Amount
 }
 
-func (body WithdrawRequestBody) GetCurrency() model.Currency {
+func (body WithdrawRequestBodyDTO) GetCurrency() model.Currency {
 	if body.Currency == nil {
 		return ""
 	}
 	return model.Currency(*body.Currency)
 }
 
-func (body WithdrawRequestBody) Money() model.Money {
+func (body WithdrawRequestBodyDTO) Money() model.Money {
 	return model.Money{
 		Amount:   body.GetAmount(),
 		Currency: body.GetCurrency(),
 	}
 }
 
-func (body WithdrawRequestBody) GetTransactionRecordID() *model.TransactionRecordID {
+func (body WithdrawRequestBodyDTO) GetTransactionRecordID() *model.TransactionRecordID {
 	if body.TransactionRecordID == nil {
 		return nil
 	}
@@ -111,7 +101,7 @@ func (body WithdrawRequestBody) GetTransactionRecordID() *model.TransactionRecor
 	return &id
 }
 
-func ValidateWithdrawRequestBody(body WithdrawRequestBody) []crosscutting.ValidateDetail {
+func ValidateWithdrawRequestBodyDTO(body WithdrawRequestBodyDTO) []crosscutting.ValidateDetail {
 	details := make([]crosscutting.ValidateDetail, 0)
 
 	if body.Amount == nil {
@@ -157,5 +147,3 @@ func ValidateWithdrawRequestBody(body WithdrawRequestBody) []crosscutting.Valida
 	}
 	return details
 }
-
-const NotEnoughBalanceAPIStatus int = 460

@@ -1,10 +1,10 @@
-package applogic_driven_infra_bridge
+package applogic_appinfra_bridge
 
 import (
+	"app/internal/appinfra/aws"
 	"app/internal/applogic/domain/model"
 	"app/internal/applogic/domain/repository"
 	"app/internal/crosscutting/errors"
-	"app/internal/driven_infra/aws"
 	"context"
 
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"

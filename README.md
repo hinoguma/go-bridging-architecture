@@ -1,1 +1,1 @@
-# go-hexagonal-architecture
+# go-bridging-architecture

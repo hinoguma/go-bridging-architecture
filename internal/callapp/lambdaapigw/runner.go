@@ -5,10 +5,6 @@ import (
 	"context"
 )
 
-type LambdaAPIGWBHandler interface {
-	Do(ctx context.Context, request HandlerRequest) (HandlerResponse, error)
-}
-
 func NewLambdaAPIGWHandlerRunner(
 	beforeMiddlewares BeforeMiddlewareCollection,
 	handler LambdaAPIGWBHandler,
@@ -41,7 +37,7 @@ func (runner LambdaAPIGWHandlerRunner) Run(ctx context.Context, request HandlerR
 
 	resp, err := runner.handler.Do(ctx, request)
 	if err != nil {
-		return HandlerResponse{}, err
+		return NewInternalServerErrorResponse(), err
 	}
 
 	for _, afterMW := range runner.afterMiddlewares.GetItems() {
