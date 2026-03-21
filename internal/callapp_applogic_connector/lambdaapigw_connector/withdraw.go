@@ -1,4 +1,4 @@
-package lambdaapigw_bridge
+package lambdaapigw_connector
 
 import (
 	"app/internal/applogic/domain/model"
