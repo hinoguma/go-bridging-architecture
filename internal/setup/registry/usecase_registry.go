@@ -1,4 +1,4 @@
-package setup
+package registry
 
 import (
 	"app/internal/applogic/usecase"

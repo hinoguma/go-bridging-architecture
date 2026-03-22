@@ -8,7 +8,7 @@ import (
 	"app/internal/crosscutting/infra"
 	"app/internal/crosscutting/log"
 	"app/internal/crosscutting/timer"
-	"app/internal/setup"
+	"app/internal/setup/registry"
 	"context"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -33,8 +33,6 @@ func main() {
 	lambda.Start(app.lambdaHandler)
 }
 
-var apiRouter lambdaapigw.APIRouter
-
 type application struct {
 	router *lambdaapigw.APIRouter
 }
@@ -56,25 +54,25 @@ func (app *application) coldStart() error {
 	if err != nil {
 		return errors.LiftWithCtx(err, ctx)
 	}
-	err = setup.GetAppInfraRegistry().Initialize(ctx, db)
+	err = registry.GetAppInfraRegistry().Initialize(ctx, db)
 	if err != nil {
 		return errors.LiftWithCtx(err, ctx)
 	}
-	setup.GetDomainRepositoryRegistry().Initialize(ctx, setup.GetAppInfraRegistry())
-	setup.GetDomainServiceRegistry().Initialize(
-		ctx, setup.GetDomainRepositoryRegistry(),
+	registry.GetDomainRepositoryRegistry().Initialize(ctx, registry.GetAppInfraRegistry())
+	registry.GetDomainServiceRegistry().Initialize(
+		ctx, registry.GetDomainRepositoryRegistry(),
 	)
-	setup.GetUseCaseRegistry().Initialize(
+	registry.GetUseCaseRegistry().Initialize(
 		ctx,
-		setup.GetDomainRepositoryRegistry(),
-		setup.GetDomainServiceRegistry(),
+		registry.GetDomainRepositoryRegistry(),
+		registry.GetDomainServiceRegistry(),
 	)
-	setup.GetAppInOutMiddlewareRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
-	setup.GetAppInOutRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
+	registry.GetAppInOutMiddlewareRegistry().Initialize(ctx, registry.GetUseCaseRegistry())
+	registry.GetAppInOutRegistry().Initialize(ctx, registry.GetUseCaseRegistry())
 
 	router := lambdaapigw.NewAPIRouter(
-		setup.GetAppInOutRegistry(),
-		setup.GetAppInOutMiddlewareRegistry(),
+		registry.GetAppInOutRegistry(),
+		registry.GetAppInOutMiddlewareRegistry(),
 	)
 	app.router = &router
 
