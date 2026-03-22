@@ -72,7 +72,7 @@ func ConvertWithdrawUseCaseOutputToHandlerResponse(output usecase.WithdrawUseCas
 
 type WithdrawRequestBodyDTO lambdaapigw.WithdrawRequestBody
 
-func (body WithdrawRequestBodyDTO) GetAmount() int64 {
+func (body WithdrawRequestBodyDTO) GetAmount() float64 {
 	if body.Amount == nil {
 		return 0
 	}

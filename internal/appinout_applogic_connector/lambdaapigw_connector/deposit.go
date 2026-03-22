@@ -69,7 +69,7 @@ func ConvertDepositUseCaseOutputToHandlerResponse(output usecase.DepositUseCaseO
 
 type DepositRequestBodyDTO lambdaapigw.DepositRequestBody
 
-func (body DepositRequestBodyDTO) GetAmount() int64 {
+func (body DepositRequestBodyDTO) GetAmount() float64 {
 	if body.Amount == nil {
 		return 0
 	}

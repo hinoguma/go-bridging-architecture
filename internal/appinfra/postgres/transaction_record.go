@@ -9,11 +9,11 @@ type TransactionRecord struct {
 	BankAccountId          string
 	BankUserId             string
 	RecordType             string
-	DepositAmountNumber    int64
+	DepositAmountNumber    float64
 	DepositAmountCurrency  string
-	WithdrawAmountNumber   int64
+	WithdrawAmountNumber   float64
 	WithdrawAmountCurrency string
-	AfterAmountNumber      int64
+	AfterAmountNumber      float64
 	AfterAmountCurrency    string
 	CreatedAt              int64
 	UpdatedAt              int64

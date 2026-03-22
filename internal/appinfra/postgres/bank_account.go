@@ -8,7 +8,7 @@ type BankAccount struct {
 	Id                      string
 	BankUserId              string
 	AccountType             string
-	AmountNumber            int64
+	AmountNumber            float64
 	AmountCurrency          string
 	LastTransactionRecordId string
 	LastTransactionTime     int64
