@@ -4,10 +4,8 @@ import (
 	"app/internal/appinout/lambdaapigw"
 	"app/internal/applogic/domain/model"
 	"app/internal/applogic/usecase"
-	"app/internal/crosscutting"
 	"app/internal/crosscutting/errors"
 	"context"
-	"encoding/json"
 )
 
 func NewWithdrawHandlerConnector(
@@ -23,17 +21,21 @@ type WithdrawHandlerConnector struct {
 func (handler WithdrawHandlerConnector) Do(ctx context.Context, request lambdaapigw.HandlerRequest) (lambdaapigw.HandlerResponse, error) {
 	internalServerErr := lambdaapigw.NewInternalServerErrorResponse()
 
-	body, err := DecodeEventToWithdrawRequestBodyDTO(request)
+	body, err := lambdaapigw.NewWithdrawRequestBody(request)
 	if err != nil {
 		return lambdaapigw.NewBodyDecodingErrorResponse(), errors.LiftWithCtx(err, ctx)
 	}
 
-	validateDetails := ValidateWithdrawRequestBodyDTO(body)
+	validateDetails := lambdaapigw.ValidateWithdrawRequestBody(
+		body, model.MaxWithdrawAmountOneTime, []string{model.JPY.String()},
+	)
 	if len(validateDetails) > 0 {
 		return lambdaapigw.NewValidateErrorResponseFromValidateDetails(validateDetails), nil
 	}
 
-	input := ConvertToWithdrawUseCaseInput(request, body)
+	bodyDTO := WithdrawRequestBodyDTO(body)
+
+	input := ConvertToWithdrawUseCaseInput(request, bodyDTO)
 
 	ucOutput, err := handler.uc.Do(ctx, input)
 	if err != nil {
@@ -42,15 +44,6 @@ func (handler WithdrawHandlerConnector) Do(ctx context.Context, request lambdaap
 
 	resp := ConvertWithdrawUseCaseOutputToHandlerResponse(ucOutput)
 	return resp, nil
-}
-
-func DecodeEventToWithdrawRequestBodyDTO(request lambdaapigw.HandlerRequest) (WithdrawRequestBodyDTO, error) {
-	body := WithdrawRequestBodyDTO{}
-	err := json.Unmarshal([]byte(request.Raw.Body), &body)
-	if err != nil {
-		return body, errors.Lift(err)
-	}
-	return body, nil
 }
 
 func ConvertToWithdrawUseCaseInput(req lambdaapigw.HandlerRequest, body WithdrawRequestBodyDTO) usecase.WithdrawUseCaseInput {
@@ -76,7 +69,7 @@ func (body WithdrawRequestBodyDTO) GetAmount() float64 {
 	if body.Amount == nil {
 		return 0
 	}
-	return *body.Amount
+	return float64(*body.Amount)
 }
 
 func (body WithdrawRequestBodyDTO) GetCurrency() model.Currency {
@@ -99,51 +92,4 @@ func (body WithdrawRequestBodyDTO) GetTransactionRecordID() *model.TransactionRe
 	}
 	id := model.TransactionRecordID(*body.TransactionRecordID)
 	return &id
-}
-
-func ValidateWithdrawRequestBodyDTO(body WithdrawRequestBodyDTO) []crosscutting.ValidateDetail {
-	details := make([]crosscutting.ValidateDetail, 0)
-
-	if body.Amount == nil {
-		details = append(details, crosscutting.ValidateDetail{
-			Type:  crosscutting.InValidTypeRequired,
-			Field: "amount",
-		})
-	} else if body.GetAmount() <= 0 {
-		details = append(details, crosscutting.ValidateDetail{
-			Type:  crosscutting.InValidTypeMin,
-			Field: "amount",
-			Min:   crosscutting.Ptr(0),
-		})
-	} else if body.GetAmount() > model.MaxWithdrawAmountOneTime {
-		details = append(details, crosscutting.ValidateDetail{
-			Type:  crosscutting.InValidTypeMax,
-			Field: "amount",
-			Max:   crosscutting.Ptr(model.MaxWithdrawAmountOneTime),
-		})
-	}
-
-	if body.Currency == nil {
-		details = append(details, crosscutting.ValidateDetail{
-			Type:  crosscutting.InValidTypeRequired,
-			Field: "currency",
-		})
-	} else if body.GetCurrency() != model.JPY {
-		details = append(details, crosscutting.ValidateDetail{
-			Type:  crosscutting.InValidTypeFormat,
-			Field: "currency",
-		})
-	}
-
-	if body.TransactionRecordID == nil {
-		// transactionRecordId is optional
-
-	} else if *body.TransactionRecordID == "" {
-		details = append(details, crosscutting.ValidateDetail{
-			Type:  crosscutting.InValidTypeMinStrLen,
-			Field: "transactionRecordId",
-			Min:   crosscutting.Ptr(1),
-		})
-	}
-	return details
 }

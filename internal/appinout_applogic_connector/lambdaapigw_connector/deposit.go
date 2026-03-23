@@ -4,10 +4,8 @@ import (
 	"app/internal/appinout/lambdaapigw"
 	"app/internal/applogic/domain/model"
 	"app/internal/applogic/usecase"
-	"app/internal/crosscutting"
 	"app/internal/crosscutting/errors"
 	"context"
-	"encoding/json"
 )
 
 func NewDepositHandlerConnector(
@@ -23,17 +21,21 @@ type DepositHandlerConnector struct {
 func (handler DepositHandlerConnector) Do(ctx context.Context, request lambdaapigw.HandlerRequest) (lambdaapigw.HandlerResponse, error) {
 	internalServerErr := lambdaapigw.NewInternalServerErrorResponse()
 
-	body, err := DecodeEventToDepositRequestBodyDTO(request)
+	body, err := lambdaapigw.NewDepositRequestBody(request)
 	if err != nil {
 		return lambdaapigw.NewBodyDecodingErrorResponse(), errors.LiftWithCtx(err, ctx)
 	}
 
-	validateDetails := ValidateDepositRequestBodyDTO(body)
+	validateDetails := lambdaapigw.ValidateDepositRequestBody(
+		body, model.MaxDepositAmountOneTime, []string{model.JPY.String()},
+	)
 	if len(validateDetails) > 0 {
 		return lambdaapigw.NewValidateErrorResponseFromValidateDetails(validateDetails), nil
 	}
 
-	input := ConvertToDepositUseCaseInput(request, body)
+	bodyDTO := DepositRequestBodyDTO(body)
+
+	input := ConvertToDepositUseCaseInput(request, bodyDTO)
 
 	ucOutput, err := handler.uc.Do(ctx, input)
 	if err != nil {
@@ -42,15 +44,6 @@ func (handler DepositHandlerConnector) Do(ctx context.Context, request lambdaapi
 
 	resp := ConvertDepositUseCaseOutputToHandlerResponse(ucOutput)
 	return resp, nil
-}
-
-func DecodeEventToDepositRequestBodyDTO(request lambdaapigw.HandlerRequest) (DepositRequestBodyDTO, error) {
-	body := DepositRequestBodyDTO{}
-	err := json.Unmarshal([]byte(request.Raw.Body), &body)
-	if err != nil {
-		return body, errors.Lift(err)
-	}
-	return body, nil
 }
 
 func ConvertToDepositUseCaseInput(req lambdaapigw.HandlerRequest, body DepositRequestBodyDTO) usecase.DepositUseCaseInput {
@@ -73,7 +66,7 @@ func (body DepositRequestBodyDTO) GetAmount() float64 {
 	if body.Amount == nil {
 		return 0
 	}
-	return *body.Amount
+	return float64(*body.Amount)
 }
 
 func (body DepositRequestBodyDTO) GetCurrency() model.Currency {
@@ -96,51 +89,4 @@ func (body DepositRequestBodyDTO) GetTransactionRecordID() *model.TransactionRec
 	}
 	id := model.TransactionRecordID(*body.TransactionRecordID)
 	return &id
-}
-
-func ValidateDepositRequestBodyDTO(body DepositRequestBodyDTO) []crosscutting.ValidateDetail {
-	details := make([]crosscutting.ValidateDetail, 0)
-
-	if body.Amount == nil {
-		details = append(details, crosscutting.ValidateDetail{
-			Type:  crosscutting.InValidTypeRequired,
-			Field: "amount",
-		})
-	} else if body.GetAmount() <= 0 {
-		details = append(details, crosscutting.ValidateDetail{
-			Type:  crosscutting.InValidTypeMin,
-			Field: "amount",
-			Min:   crosscutting.Ptr(0),
-		})
-	} else if body.GetAmount() > model.MaxWithdrawAmountOneTime {
-		details = append(details, crosscutting.ValidateDetail{
-			Type:  crosscutting.InValidTypeMax,
-			Field: "amount",
-			Max:   crosscutting.Ptr(model.MaxWithdrawAmountOneTime),
-		})
-	}
-
-	if body.Currency == nil {
-		details = append(details, crosscutting.ValidateDetail{
-			Type:  crosscutting.InValidTypeRequired,
-			Field: "currency",
-		})
-	} else if body.GetCurrency() != model.JPY {
-		details = append(details, crosscutting.ValidateDetail{
-			Type:  crosscutting.InValidTypeFormat,
-			Field: "currency",
-		})
-	}
-
-	if body.TransactionRecordID == nil {
-		// transactionRecordId is optional
-
-	} else if *body.TransactionRecordID == "" {
-		details = append(details, crosscutting.ValidateDetail{
-			Type:  crosscutting.InValidTypeMinStrLen,
-			Field: "transactionRecordId",
-			Min:   crosscutting.Ptr(1),
-		})
-	}
-	return details
 }

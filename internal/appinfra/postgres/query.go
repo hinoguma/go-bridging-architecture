@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -98,7 +99,7 @@ func BuildSelectQueryWithSingleCondition[T string | int64](tableName string, fie
 
 func BuildUpdateQueryWithId(tableName string, id SQLRecordID, updateFields UpdateFieldRequests) (string, []any) {
 	setClause, values := updateFields.ToSQLSetClause()
-	query := "UPDATE " + tableName + " SET " + setClause + " WHERE id = $" + string(len(values)+1)
+	query := "UPDATE " + tableName + " SET " + setClause + " WHERE id = $" + strconv.Itoa(len(values)+1)
 	values = append(values, id.Value())
 	return query, values
 }
@@ -120,7 +121,7 @@ func BuildInsertQuery(tableName string, fields map[string]any) (string, []any) {
 			placeholders += ", "
 		}
 		columns += col
-		placeholders += "$" + string(i)
+		placeholders += "$" + strconv.Itoa(i)
 		values = append(values, val)
 		i++
 	}
@@ -140,7 +141,7 @@ func BuildUpsertQuery(tableName string, fields map[string]any) (string, []any) {
 			placeholders += ", "
 		}
 		columns += col
-		placeholders += "$" + string(i)
+		placeholders += "$" + strconv.Itoa(i)
 		values = append(values, val)
 		i++
 	}
@@ -177,7 +178,7 @@ func (requests UpdateFieldRequests) ToSQLSetClause() (string, []any) {
 		if i > 0 {
 			setClause += ", "
 		}
-		setClause += req.FieldName + " = $" + string(i+1)
+		setClause += req.FieldName + " = $" + strconv.Itoa(i+1)
 		values = append(values, req.NewValue)
 	}
 

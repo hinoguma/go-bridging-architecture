@@ -49,9 +49,9 @@ type ValidateDetail struct {
 	Message string      `json:"message"`
 
 	// information
-	Min    *int    `json:"min,omitempty"`
-	Max    *int    `json:"max,omitempty"`
-	Format *string `json:"format,omitempty"`
+	Min    *float64 `json:"min,omitempty"`
+	Max    *float64 `json:"max,omitempty"`
+	Format *string  `json:"format,omitempty"`
 }
 
 func NewRequiredValidateDetail(field string) ValidateDetail {
@@ -61,7 +61,7 @@ func NewRequiredValidateDetail(field string) ValidateDetail {
 	}
 }
 
-func NewMinValidateDetail(field string, min int) ValidateDetail {
+func NewMinValidateDetail(field string, min float64) ValidateDetail {
 	return ValidateDetail{
 		Type:  InValidTypeMin,
 		Field: field,
@@ -69,7 +69,7 @@ func NewMinValidateDetail(field string, min int) ValidateDetail {
 	}
 }
 
-func NewMaxValidateDetail(field string, val int) ValidateDetail {
+func NewMaxValidateDetail(field string, val float64) ValidateDetail {
 	return ValidateDetail{
 		Type:  InValidTypeMax,
 		Field: field,
@@ -77,7 +77,7 @@ func NewMaxValidateDetail(field string, val int) ValidateDetail {
 	}
 }
 
-func NewNotInRangeValidateDetail(field string, min int, max int) ValidateDetail {
+func NewNotInRangeValidateDetail(field string, min float64, max float64) ValidateDetail {
 	return ValidateDetail{
 		Type:  InValidTypeNotInRange,
 		Field: field,
@@ -90,7 +90,7 @@ func NewMinStrLenValidateDetail(field string, min int) ValidateDetail {
 	return ValidateDetail{
 		Type:  InValidTypeMinStrLen,
 		Field: field,
-		Min:   &min,
+		Min:   Ptr(float64(min)),
 	}
 }
 
@@ -102,7 +102,7 @@ func NewMaxStrLenValidateDetail(field string, val int) ValidateDetail {
 	return ValidateDetail{
 		Type:  InValidTypeMaxStrLen,
 		Field: field,
-		Max:   &val,
+		Max:   Ptr(float64(val)),
 	}
 }
 
@@ -110,8 +110,8 @@ func NewNotInRangeStrLenValidateDetail(field string, min int, max int) ValidateD
 	return ValidateDetail{
 		Type:  InValidTypeNotInRangeStrLen,
 		Field: field,
-		Min:   &min,
-		Max:   &max,
+		Min:   Ptr(float64(min)),
+		Max:   Ptr(float64(max)),
 	}
 }
 
@@ -119,7 +119,7 @@ func NEwMaxArrayLenValidateDetail(field string, val int) ValidateDetail {
 	return ValidateDetail{
 		Type:  InValidTypeMaxArrayLen,
 		Field: field,
-		Max:   &val,
+		Max:   Ptr(float64(val)),
 	}
 }
 
