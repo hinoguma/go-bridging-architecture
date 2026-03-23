@@ -1,4 +1,4 @@
-package applogic_appinfra_bridge
+package applogic_appinfra_connector
 
 import (
 	"app/internal/appinfra/postgres"

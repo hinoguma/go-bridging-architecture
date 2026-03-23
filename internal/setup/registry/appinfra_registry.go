@@ -1,4 +1,4 @@
-package setup
+package registry
 
 import (
 	"app/internal/appinfra/aws"
@@ -9,7 +9,7 @@ import (
 	"sync"
 )
 
-type DrivenInfraRegistry struct {
+type AppInfraRegistry struct {
 	sync.Mutex
 	dynamoDBClient     driven_infra_aws.DynamoDBClient
 	cognitoClient      driven_infra_aws.CognitoClient
@@ -17,7 +17,7 @@ type DrivenInfraRegistry struct {
 	transactionManager postgres.TransactionManagerIF
 }
 
-func (registry *DrivenInfraRegistry) Initialize(
+func (registry *AppInfraRegistry) Initialize(
 	ctx context.Context,
 	db *sql.DB,
 ) error {
@@ -39,24 +39,24 @@ func (registry *DrivenInfraRegistry) Initialize(
 	return nil
 }
 
-func (registry *DrivenInfraRegistry) DynamoDBClient() driven_infra_aws.DynamoDBClient {
+func (registry *AppInfraRegistry) DynamoDBClient() driven_infra_aws.DynamoDBClient {
 	return registry.dynamoDBClient
 }
 
-func (registry *DrivenInfraRegistry) CognitoClient() driven_infra_aws.CognitoClient {
+func (registry *AppInfraRegistry) CognitoClient() driven_infra_aws.CognitoClient {
 	return registry.cognitoClient
 }
 
-func (registry *DrivenInfraRegistry) SQLClient() postgres.SQLClient {
+func (registry *AppInfraRegistry) SQLClient() postgres.SQLClient {
 	return registry.sqlClient
 }
 
-func (registry *DrivenInfraRegistry) TransactionManager() postgres.TransactionManagerIF {
+func (registry *AppInfraRegistry) TransactionManager() postgres.TransactionManagerIF {
 	return registry.transactionManager
 }
 
-var drivenInfraRegistry = DrivenInfraRegistry{}
+var appInfraRegistry = AppInfraRegistry{}
 
-func GetDrivenInfraRegistry() *DrivenInfraRegistry {
-	return &drivenInfraRegistry
+func GetAppInfraRegistry() *AppInfraRegistry {
+	return &appInfraRegistry
 }

@@ -27,9 +27,9 @@ func NewTransactionSuccessResponse(transactionID string) HandlerResponse {
  ******************************/
 
 type DepositRequestBody struct {
-	TransactionRecordID *string `json:"transactionRecordId,omitempty"`
-	Amount              *int64  `json:"amount,omitempty"`
-	Currency            *string `json:"currency,omitempty"`
+	TransactionRecordID *string  `json:"transactionRecordId,omitempty"`
+	Amount              *float64 `json:"amount,omitempty"`
+	Currency            *string  `json:"currency,omitempty"`
 }
 
 type DepositSuccessResponseBody TransactionSuccessResponseBody
@@ -45,9 +45,9 @@ func NewDepositSuccessResponse(transactionID string) HandlerResponse {
 const NotEnoughBalanceAPIStatus int = 460
 
 type WithdrawRequestBody struct {
-	TransactionRecordID *string `json:"transactionRecordId,omitempty"`
-	Amount              *int64  `json:"amount,omitempty"`
-	Currency            *string `json:"currency,omitempty"`
+	TransactionRecordID *string  `json:"transactionRecordId,omitempty"`
+	Amount              *float64 `json:"amount,omitempty"`
+	Currency            *string  `json:"currency,omitempty"`
 }
 
 func NewNotEnoughBalanceResponse() HandlerResponse {

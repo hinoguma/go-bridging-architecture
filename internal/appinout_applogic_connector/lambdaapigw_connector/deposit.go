@@ -1,51 +1,51 @@
-package lambdaapigw_bridge
+package lambdaapigw_connector
 
 import (
+	"app/internal/appinout/lambdaapigw"
 	"app/internal/applogic/domain/model"
 	"app/internal/applogic/usecase"
-	"app/internal/callapp/lambdaapigw"
 	"app/internal/crosscutting"
 	"app/internal/crosscutting/errors"
 	"context"
 	"encoding/json"
 )
 
-func NewWithdrawHandlerLambdaAPIGateway(
-	uc usecase.WithdrawUseCase,
-) lambdaapigw.LambdaAPIGWBHandler {
-	return WithdrawHandlerLambdaAPIGateway{uc: uc}
+func NewDepositHandlerConnector(
+	uc usecase.DepositUseCase,
+) lambdaapigw.LambdaAPIGWHandler {
+	return DepositHandlerConnector{uc: uc}
 }
 
-type WithdrawHandlerLambdaAPIGateway struct {
-	uc usecase.WithdrawUseCase
+type DepositHandlerConnector struct {
+	uc usecase.DepositUseCase
 }
 
-func (handler WithdrawHandlerLambdaAPIGateway) Do(ctx context.Context, request lambdaapigw.HandlerRequest) (lambdaapigw.HandlerResponse, error) {
+func (handler DepositHandlerConnector) Do(ctx context.Context, request lambdaapigw.HandlerRequest) (lambdaapigw.HandlerResponse, error) {
 	internalServerErr := lambdaapigw.NewInternalServerErrorResponse()
 
-	body, err := DecodeEventToWithdrawRequestBodyDTO(request)
+	body, err := DecodeEventToDepositRequestBodyDTO(request)
 	if err != nil {
 		return lambdaapigw.NewBodyDecodingErrorResponse(), errors.LiftWithCtx(err, ctx)
 	}
 
-	validateDetails := ValidateWithdrawRequestBodyDTO(body)
+	validateDetails := ValidateDepositRequestBodyDTO(body)
 	if len(validateDetails) > 0 {
 		return lambdaapigw.NewValidateErrorResponseFromValidateDetails(validateDetails), nil
 	}
 
-	input := ConvertToWithdrawUseCaseInput(request, body)
+	input := ConvertToDepositUseCaseInput(request, body)
 
 	ucOutput, err := handler.uc.Do(ctx, input)
 	if err != nil {
 		return internalServerErr, errors.Lift(err)
 	}
 
-	resp := ConvertWithdrawUseCaseOutputToHandlerResponse(ucOutput)
+	resp := ConvertDepositUseCaseOutputToHandlerResponse(ucOutput)
 	return resp, nil
 }
 
-func DecodeEventToWithdrawRequestBodyDTO(request lambdaapigw.HandlerRequest) (WithdrawRequestBodyDTO, error) {
-	body := WithdrawRequestBodyDTO{}
+func DecodeEventToDepositRequestBodyDTO(request lambdaapigw.HandlerRequest) (DepositRequestBodyDTO, error) {
+	body := DepositRequestBodyDTO{}
 	err := json.Unmarshal([]byte(request.Raw.Body), &body)
 	if err != nil {
 		return body, errors.Lift(err)
@@ -53,47 +53,44 @@ func DecodeEventToWithdrawRequestBodyDTO(request lambdaapigw.HandlerRequest) (Wi
 	return body, nil
 }
 
-func ConvertToWithdrawUseCaseInput(req lambdaapigw.HandlerRequest, body WithdrawRequestBodyDTO) usecase.WithdrawUseCaseInput {
-	return usecase.WithdrawUseCaseInput{
+func ConvertToDepositUseCaseInput(req lambdaapigw.HandlerRequest, body DepositRequestBodyDTO) usecase.DepositUseCaseInput {
+	return usecase.DepositUseCaseInput{
 		BankAccountID: GetBankAccountIDFromAuthenticatedRequest(req),
 		TransactionID: body.GetTransactionRecordID(),
 		Amount:        body.Money(),
 	}
 }
 
-func ConvertWithdrawUseCaseOutputToHandlerResponse(output usecase.WithdrawUseCaseOutput) lambdaapigw.HandlerResponse {
-	if output.NotEnoughBalance {
-		return lambdaapigw.NewNotEnoughBalanceResponse()
-	}
-	return lambdaapigw.NewWithdrawSuccessResponse(
+func ConvertDepositUseCaseOutputToHandlerResponse(output usecase.DepositUseCaseOutput) lambdaapigw.HandlerResponse {
+	return lambdaapigw.NewDepositSuccessResponse(
 		output.TransactionRecord.ID.String(),
 	)
 }
 
-type WithdrawRequestBodyDTO lambdaapigw.WithdrawRequestBody
+type DepositRequestBodyDTO lambdaapigw.DepositRequestBody
 
-func (body WithdrawRequestBodyDTO) GetAmount() int64 {
+func (body DepositRequestBodyDTO) GetAmount() float64 {
 	if body.Amount == nil {
 		return 0
 	}
 	return *body.Amount
 }
 
-func (body WithdrawRequestBodyDTO) GetCurrency() model.Currency {
+func (body DepositRequestBodyDTO) GetCurrency() model.Currency {
 	if body.Currency == nil {
 		return ""
 	}
 	return model.Currency(*body.Currency)
 }
 
-func (body WithdrawRequestBodyDTO) Money() model.Money {
+func (body DepositRequestBodyDTO) Money() model.Money {
 	return model.Money{
 		Amount:   body.GetAmount(),
 		Currency: body.GetCurrency(),
 	}
 }
 
-func (body WithdrawRequestBodyDTO) GetTransactionRecordID() *model.TransactionRecordID {
+func (body DepositRequestBodyDTO) GetTransactionRecordID() *model.TransactionRecordID {
 	if body.TransactionRecordID == nil {
 		return nil
 	}
@@ -101,7 +98,7 @@ func (body WithdrawRequestBodyDTO) GetTransactionRecordID() *model.TransactionRe
 	return &id
 }
 
-func ValidateWithdrawRequestBodyDTO(body WithdrawRequestBodyDTO) []crosscutting.ValidateDetail {
+func ValidateDepositRequestBodyDTO(body DepositRequestBodyDTO) []crosscutting.ValidateDetail {
 	details := make([]crosscutting.ValidateDetail, 0)
 
 	if body.Amount == nil {

@@ -2,13 +2,13 @@ package main
 
 import (
 	"app/internal/appinfra/postgres"
-	"app/internal/callapp/lambdaapigw"
+	"app/internal/appinout/lambdaapigw"
 	"app/internal/crosscutting"
 	"app/internal/crosscutting/errors"
 	"app/internal/crosscutting/infra"
 	"app/internal/crosscutting/log"
 	"app/internal/crosscutting/timer"
-	"app/internal/setup"
+	"app/internal/setup/registry"
 	"context"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -18,8 +18,9 @@ import (
 
 func main() {
 
-	// cold start phase: initialize application and infrastructure
-	err := coldStart()
+	// lambda cold start phase
+	app := application{}
+	err := app.coldStart()
 	if err != nil {
 		log.Error(
 			"error in cold start",
@@ -29,15 +30,16 @@ func main() {
 	}
 
 	// start lambda: this is like web server start.
-	lambda.Start(lambdaHandler)
+	lambda.Start(app.lambdaHandler)
 }
 
-var apiRouter APIRouter
+type application struct {
+	router *lambdaapigw.APIRouter
+}
 
-func coldStart() error {
+func (app *application) coldStart() error {
 	log.Info("cold start started")
 
-	// setup application
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, lambdaapigw.RequestIDKey, "cold_start_request_id")
 
@@ -48,37 +50,37 @@ func coldStart() error {
 	timer.SetGlobalTimeGenerator(infra.NewJstTimeGenerator())
 	errors.SetContextRequestIDKey(lambdaapigw.RequestIDKey)
 
-	// set up user call -> app infra
 	db, err := postgres.NewPostgresDBFromEnv()
 	if err != nil {
 		return errors.LiftWithCtx(err, ctx)
 	}
-	err = setup.GetDrivenInfraRegistry().Initialize(ctx, db)
+	err = registry.GetAppInfraRegistry().Initialize(ctx, db)
 	if err != nil {
 		return errors.LiftWithCtx(err, ctx)
 	}
-	setup.GetDomainRepositoryRegistry().Initialize(ctx, setup.GetDrivenInfraRegistry())
-	setup.GetDomainServiceRegistry().Initialize(
-		ctx, setup.GetDomainRepositoryRegistry(),
+	registry.GetDomainRepositoryRegistry().Initialize(ctx, registry.GetAppInfraRegistry())
+	registry.GetDomainServiceRegistry().Initialize(
+		ctx, registry.GetDomainRepositoryRegistry(),
 	)
-	setup.GetUseCaseRegistry().Initialize(
+	registry.GetUseCaseRegistry().Initialize(
 		ctx,
-		setup.GetDomainRepositoryRegistry(),
-		setup.GetDomainServiceRegistry(),
+		registry.GetDomainRepositoryRegistry(),
+		registry.GetDomainServiceRegistry(),
 	)
-	setup.GetDriverInterfaceMiddlewareRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
-	setup.GetDriverInterfaceRegistry().Initialize(ctx, setup.GetUseCaseRegistry())
+	registry.GetAppInOutMiddlewareRegistry().Initialize(ctx, registry.GetUseCaseRegistry())
+	registry.GetAppInOutRegistry().Initialize(ctx, registry.GetUseCaseRegistry())
 
-	apiRouter = NewAPIRouter(
-		setup.GetDriverInterfaceRegistry(),
-		setup.GetDriverInterfaceMiddlewareRegistry(),
+	router := lambdaapigw.NewAPIRouter(
+		registry.GetAppInOutRegistry(),
+		registry.GetAppInOutMiddlewareRegistry(),
 	)
+	app.router = &router
 
 	log.Info("cold start completed")
 	return nil
 }
 
-func lambdaHandler(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func (app *application) lambdaHandler(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	requestID := "unknown_request_id"
 	LambdaContext, ok := lambdacontext.FromContext(ctx)
 	if ok {
@@ -92,7 +94,17 @@ func lambdaHandler(ctx context.Context, event events.APIGatewayProxyRequest) (ev
 		log.WithRequestID(requestID),
 	)
 
-	beforeMiddlewares, handler, afterMiddlewares := apiRouter.Do(ctx, event)
+	if app.router == nil {
+		err := errors.NewWithCtx("router is not initialized", ctx)
+		log.Error(
+			"router is not initialized",
+			log.WithErr(err),
+			log.WithRequestID(requestID),
+		)
+		return lambdaapigw.NewInternalServerErrorResponse().Raw, err
+	}
+
+	beforeMiddlewares, handler, afterMiddlewares := app.router.Do(ctx, event)
 	if handler == nil {
 		handlerResp := lambdaapigw.NewNotFoundErrorResponse()
 		return handlerResp.Raw, nil

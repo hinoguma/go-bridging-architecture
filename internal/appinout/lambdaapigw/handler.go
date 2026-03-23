@@ -4,6 +4,6 @@ import (
 	"context"
 )
 
-type LambdaAPIGWBHandler interface {
+type LambdaAPIGWHandler interface {
 	Do(ctx context.Context, request HandlerRequest) (HandlerResponse, error)
 }
