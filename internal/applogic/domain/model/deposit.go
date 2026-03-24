@@ -2,6 +2,8 @@ package model
 
 import "time"
 
+const MaxDepositAmountOneTime = 1_000_000
+
 type DepositServiceRequest struct {
 	UseDBTransaction
 	HasRequestAt

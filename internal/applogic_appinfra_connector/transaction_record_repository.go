@@ -15,12 +15,12 @@ type transactionRecordRepositoryDynamoDBConnector struct {
 	dynamo driven_infra_aws.DynamoDBClient
 }
 
-func (repo transactionRecordRepositoryDynamoDBConnector) Get(ctx context.Context, id model.TransactionRecordID, optionaltFuncs ...model.DBOperationOptionalFunc) (model.TransactionRecord, error) {
+func (repo transactionRecordRepositoryDynamoDBConnector) Get(ctx context.Context, id model.TransactionRecordID, optionalFuncs ...model.DBOperationOptionalFunc) (model.TransactionRecord, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (repo transactionRecordRepositoryDynamoDBConnector) Create(ctx context.Context, account model.TransactionRecord, optionaltFuncs ...model.DBOperationOptionalFunc) (model.TransactionRecord, error) {
+func (repo transactionRecordRepositoryDynamoDBConnector) Create(ctx context.Context, account model.TransactionRecord, optionalFuncs ...model.DBOperationOptionalFunc) (model.TransactionRecord, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -43,11 +43,11 @@ func NewTransactionRecordRepositoryPostgresConnector(client postgres.SQLClient) 
 	}
 }
 
-func (repo transactionRecordRepositoryPostgresConnector) Get(ctx context.Context, id model.TransactionRecordID, optionaltFuncs ...model.DBOperationOptionalFunc) (model.TransactionRecord, error) {
+func (repo transactionRecordRepositoryPostgresConnector) Get(ctx context.Context, id model.TransactionRecordID, optionalFuncs ...model.DBOperationOptionalFunc) (model.TransactionRecord, error) {
 	var row *sql.Row
 	var err error
 
-	sqlOptions := convertOptionalFuncsToSQLOperationOptions(optionaltFuncs)
+	sqlOptions := convertOptionalFuncsToSQLOperationOptions(optionalFuncs)
 
 	sqlItem := transactionRecordDTO{}
 
@@ -72,10 +72,10 @@ func (repo transactionRecordRepositoryPostgresConnector) Get(ctx context.Context
 func (repo transactionRecordRepositoryPostgresConnector) Create(
 	ctx context.Context,
 	item model.TransactionRecord,
-	optionaltFuncs ...model.DBOperationOptionalFunc,
+	optionalFuncs ...model.DBOperationOptionalFunc,
 ) (model.TransactionRecord, error) {
 
-	sqlOptions := convertOptionalFuncsToSQLOperationOptions(optionaltFuncs)
+	sqlOptions := convertOptionalFuncsToSQLOperationOptions(optionalFuncs)
 
 	sqlItem := transactionRecordDTO{}
 	sqlItem.SetByModel(item)

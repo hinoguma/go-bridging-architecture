@@ -33,7 +33,7 @@ func (registry *AppInfraRegistry) Initialize(
 		registry.Unlock()
 		return errors.Lift(err)
 	}
-	registry.sqlClient = postgres.NewPostgreSQLClient(db)
+	registry.sqlClient = postgres.NewPostgresSQLClient(db)
 	registry.transactionManager = postgres.NewTransactionManager(registry.sqlClient.GetDB())
 	registry.Unlock()
 	return nil

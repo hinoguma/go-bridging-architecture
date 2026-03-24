@@ -158,9 +158,9 @@ type ErrorDetail struct {
 	Message string          `json:"message"`
 
 	// information
-	Min    *int    `json:"min,omitempty"`
-	Max    *int    `json:"max,omitempty"`
-	Format *string `json:"format,omitempty"`
+	Min    *float64 `json:"min,omitempty"`
+	Max    *float64 `json:"max,omitempty"`
+	Format *string  `json:"format,omitempty"`
 }
 
 func ConvertInValidTypeToErrorDetailType(invalidType crosscutting.InValidType) ErrorDetailType {

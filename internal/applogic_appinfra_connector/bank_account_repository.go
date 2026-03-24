@@ -15,17 +15,17 @@ type bankAccountRepositoryDynamoDBConnector struct {
 	dynamo driven_infra_aws.DynamoDBClient
 }
 
-func (b bankAccountRepositoryDynamoDBConnector) Create(ctx context.Context, account model.BankAccount, optionaltFuncs ...model.DBOperationOptionalFunc) (model.BankAccount, error) {
+func (b bankAccountRepositoryDynamoDBConnector) Create(ctx context.Context, account model.BankAccount, optionalFuncs ...model.DBOperationOptionalFunc) (model.BankAccount, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (b bankAccountRepositoryDynamoDBConnector) Update(ctx context.Context, request model.UpdateBankAccountRequest, optionaltFuncs ...model.DBOperationOptionalFunc) error {
+func (b bankAccountRepositoryDynamoDBConnector) Update(ctx context.Context, request model.UpdateBankAccountRequest, optionalFuncs ...model.DBOperationOptionalFunc) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (b bankAccountRepositoryDynamoDBConnector) Get(ctx context.Context, id model.BankAccountID, optionaltFuncs ...model.DBOperationOptionalFunc) (model.BankAccount, error) {
+func (b bankAccountRepositoryDynamoDBConnector) Get(ctx context.Context, id model.BankAccountID, optionalFuncs ...model.DBOperationOptionalFunc) (model.BankAccount, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -42,11 +42,11 @@ type bankAccountRepositoryPostgresConnector struct {
 	client postgres.SQLClient
 }
 
-func (repo bankAccountRepositoryPostgresConnector) Get(ctx context.Context, id model.BankAccountID, optionaltFuncs ...model.DBOperationOptionalFunc) (model.BankAccount, error) {
+func (repo bankAccountRepositoryPostgresConnector) Get(ctx context.Context, id model.BankAccountID, optionalFuncs ...model.DBOperationOptionalFunc) (model.BankAccount, error) {
 	var row *sql.Row
 	var err error
 
-	sqlOptions := convertOptionalFuncsToSQLOperationOptions(optionaltFuncs)
+	sqlOptions := convertOptionalFuncsToSQLOperationOptions(optionalFuncs)
 
 	sqlItem := bankAccountDTO{}
 
@@ -71,10 +71,10 @@ func (repo bankAccountRepositoryPostgresConnector) Get(ctx context.Context, id m
 func (repo bankAccountRepositoryPostgresConnector) Create(
 	ctx context.Context,
 	item model.BankAccount,
-	optionaltFuncs ...model.DBOperationOptionalFunc,
+	optionalFuncs ...model.DBOperationOptionalFunc,
 ) (model.BankAccount, error) {
 
-	sqlOptions := convertOptionalFuncsToSQLOperationOptions(optionaltFuncs)
+	sqlOptions := convertOptionalFuncsToSQLOperationOptions(optionalFuncs)
 
 	sqlItem := bankAccountDTO{}
 	sqlItem.SetByModel(item)
@@ -90,8 +90,8 @@ func (repo bankAccountRepositoryPostgresConnector) Create(
 	return sqlItem.ToModel(), nil
 }
 
-func (repo bankAccountRepositoryPostgresConnector) Update(ctx context.Context, request model.UpdateBankAccountRequest, optionaltFuncs ...model.DBOperationOptionalFunc) error {
-	sqlOptions := convertOptionalFuncsToSQLOperationOptions(optionaltFuncs)
+func (repo bankAccountRepositoryPostgresConnector) Update(ctx context.Context, request model.UpdateBankAccountRequest, optionalFuncs ...model.DBOperationOptionalFunc) error {
+	sqlOptions := convertOptionalFuncsToSQLOperationOptions(optionalFuncs)
 
 	updateRequests := convertUpdateBankAccountRequestToUpdateRequests(request)
 	_, err := repo.client.UpdateRowByStrID(
