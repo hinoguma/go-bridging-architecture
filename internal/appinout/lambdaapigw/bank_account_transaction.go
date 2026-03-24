@@ -123,20 +123,6 @@ func NewWithdrawRequestBody(request HandlerRequest) (WithdrawRequestBody, error)
 	return body, nil
 }
 
-func NewNotEnoughBalanceResponse() HandlerResponse {
-	return NewErrorResponse(
-		NotEnoughBalanceAPIStatus,
-		"your balance is not enough for this withdraw",
-		nil,
-	)
-}
-
-type WithdrawSuccessResponseBody TransactionSuccessResponseBody
-
-func NewWithdrawSuccessResponse(transactionID string) HandlerResponse {
-	return NewTransactionSuccessResponse(transactionID)
-}
-
 func ValidateWithdrawRequestBody(
 	body WithdrawRequestBody,
 	maxAmountOneTime int,
@@ -180,4 +166,18 @@ func ValidateWithdrawRequestBody(
 		))
 	}
 	return details
+}
+
+func NewNotEnoughBalanceResponse() HandlerResponse {
+	return NewErrorResponse(
+		NotEnoughBalanceAPIStatus,
+		"your balance is not enough for this withdraw",
+		nil,
+	)
+}
+
+type WithdrawSuccessResponseBody TransactionSuccessResponseBody
+
+func NewWithdrawSuccessResponse(transactionID string) HandlerResponse {
+	return NewTransactionSuccessResponse(transactionID)
 }

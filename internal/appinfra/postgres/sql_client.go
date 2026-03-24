@@ -51,7 +51,7 @@ type postgreSQLClient struct {
 	db *sql.DB
 }
 
-func NewPostgreSQLClient(db *sql.DB) SQLClient {
+func NewPostgresSQLClient(db *sql.DB) SQLClient {
 	return &postgreSQLClient{db: db}
 }
 

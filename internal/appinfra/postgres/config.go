@@ -80,7 +80,7 @@ func (conf PostgresConfig) URL() string {
 	)
 }
 
-// NewPostgresDB creates a new sql.DB instance for PostgreSQL
+// NewPostgresDB creates a new sql.DB instance for PostgresSQL
 func NewPostgresDB(config PostgresConfig) (*sql.DB, error) {
 	// For pgx driver use "pgx", for lib/pq use "postgres"
 	db, err := sql.Open("pgx", config.DSN())
